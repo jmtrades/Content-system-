@@ -46,8 +46,9 @@ export function PieChartComponent({
           dataKey="value"
           label={
             showLabel
-              ? (props: Record<string, unknown>) =>
-                  `${props.name} ${((props.percent as number) * 100).toFixed(0)}%`
+              ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (props: any) =>
+                  `${props.name} ${(props.percent * 100).toFixed(0)}%`
               : false
           }
           labelLine={showLabel ? true : false}
