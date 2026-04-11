@@ -8,7 +8,6 @@ import {
   fetchWithRetry,
   RateLimiter,
   logger,
-  detectCategory,
   estimateImportance,
   truncate,
 } from './utils';

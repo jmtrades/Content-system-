@@ -3,18 +3,13 @@
 import React, { useState, useEffect } from "react";
 import {
   Settings,
-  CheckCircle,
-  XCircle,
-  RefreshCw,
   Plus,
   Trash2,
   Globe,
   Clock,
-  Zap,
   Activity,
   Eye,
   Save,
-  AlertTriangle,
   ShoppingCart,
   Rss,
 } from "lucide-react";

@@ -2,7 +2,6 @@
 // Instagram Graph API Client (Reels & Insights)
 // ============================================================================
 
-import fs from 'fs/promises';
 import type { OAuthTokens, PlatformUploadResult, PlatformMetrics, PlatformAccountMetrics } from './types';
 
 // ---------------------------------------------------------------------------

@@ -61,7 +61,6 @@ async function fetchStory(id: number): Promise<HNStory | null> {
 // ---------------------------------------------------------------------------
 
 function storyToItem(story: HNStory): ScrapedItem {
-  const sourceUrl = story.url || `https://news.ycombinator.com/item?id=${story.id}`;
   const hnUrl = `https://news.ycombinator.com/item?id=${story.id}`;
   const summary = story.text
     ? truncate(story.text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(), 300)

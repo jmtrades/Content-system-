@@ -65,7 +65,6 @@ const OAUTH2_TOKEN_URL = 'https://api.twitter.com/2/oauth2/token';
 const RATE_LIMIT_DELAY_MS = 1000;
 const MAX_RETRIES = 3;
 const RETRY_BASE_DELAY_MS = 2000;
-const MEDIA_POLL_INTERVAL_MS = 5000;
 const MEDIA_POLL_MAX_ATTEMPTS = 120; // 10 minutes max for video processing
 const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks for media upload
 

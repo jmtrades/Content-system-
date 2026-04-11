@@ -10,7 +10,6 @@ import {
   detectCategory,
   estimateImportance,
   truncate,
-  isAIRelated,
 } from './utils';
 import type { RadarItemCategory } from '@/types';
 

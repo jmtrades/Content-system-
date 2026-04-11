@@ -62,7 +62,7 @@ async function persistScrapedItems(
   source: string,
   items: Array<{
     title: string;
-    url: string;
+    source_url: string;
     summary?: string;
     category?: string;
     importance_score?: number;
@@ -78,7 +78,7 @@ async function persistScrapedItems(
   const db = getServerClient();
   const rows = items.map((item) => ({
     source,
-    source_url: item.url,
+    source_url: item.source_url,
     title: item.title,
     summary: item.summary ?? null,
     category: item.category ?? 'industry_news',

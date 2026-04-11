@@ -197,7 +197,6 @@ export class LinkedInClient {
     try {
       await this.ensureValidToken();
 
-      const fileStat = await fs.stat(videoPath);
       const fileBuffer = await fs.readFile(videoPath);
       const owner = this.personUrn;
 

@@ -11,7 +11,6 @@ import {
   estimateImportance,
   truncate,
   withRetry,
-  isAIRelated,
 } from './utils';
 
 const SCRAPER = 'twitter';
@@ -93,7 +92,7 @@ async function findWorkingInstance(): Promise<string | null> {
 
 function parseTweetText(content: string): { text: string; hasMedia: boolean } {
   // Remove HTML tags but preserve text
-  let text = content
+  const text = content
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]*>/g, '')
     .replace(/&amp;/g, '&')

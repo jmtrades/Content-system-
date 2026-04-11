@@ -530,7 +530,7 @@ export async function autoScheduleContent(
 
   // Fetch script data for captions via the video job → script chain
   const jobIds = Array.from(new Set(outputs.map((o) => o.job_id).filter(Boolean)));
-  let scriptData: Record<string, { caption: string; hashtags: string[] }> = {};
+  const scriptData: Record<string, { caption: string; hashtags: string[] }> = {};
 
   if (jobIds.length > 0) {
     const { data: jobs } = await db

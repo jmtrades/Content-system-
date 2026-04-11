@@ -304,7 +304,7 @@ export async function getRevenueDashboard(): Promise<RevenueDashboard> {
 
   // Fetch product details for enrichment
   const productIds = Object.keys(byProductMap);
-  let productLookup: Record<string, { name: string; type: string }> = {};
+  const productLookup: Record<string, { name: string; type: string }> = {};
 
   if (productIds.length > 0) {
     const { data: products } = await db

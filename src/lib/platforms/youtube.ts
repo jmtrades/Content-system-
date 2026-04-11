@@ -3,7 +3,6 @@
 // ============================================================================
 
 import fs from 'fs/promises';
-import path from 'path';
 import type { OAuthTokens, PlatformUploadResult, PlatformMetrics, PlatformAccountMetrics } from './types';
 
 // ---------------------------------------------------------------------------

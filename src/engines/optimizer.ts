@@ -42,7 +42,6 @@ export async function weeklyOptimization(): Promise<{
   report: Record<string, unknown>;
 }> {
   log('Starting weekly optimization...');
-  const db = getDb();
 
   try {
     const hookData = await analyzeHooks();
@@ -160,7 +159,7 @@ async function analyzeTopics(): Promise<TopicPerformance[]> {
 
     if (!pillars) return [];
 
-    const uniquePillars = [...new Set(pillars.map((p: { content_pillar: string }) => p.content_pillar))];
+    const uniquePillars = Array.from(new Set(pillars.map((p: { content_pillar: string }) => p.content_pillar)));
     const results: TopicPerformance[] = [];
 
     for (const pillar of uniquePillars) {

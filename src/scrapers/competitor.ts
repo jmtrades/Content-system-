@@ -10,7 +10,6 @@ import {
   RateLimiter,
   logger,
   detectCategory,
-  estimateImportance,
   truncate,
   withRetry,
 } from './utils';

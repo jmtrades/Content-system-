@@ -4,7 +4,6 @@
 // SRT files for FFmpeg burn-in across different visual styles.
 // ============================================================================
 
-import { getDb } from '@/lib/db';
 import { generateCaptions as whisperGenerate, parseSRT } from '@/lib/whisper';
 import * as path from 'path';
 import * as fs from 'fs';

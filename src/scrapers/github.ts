@@ -13,7 +13,6 @@ import {
   truncate,
   daysAgo,
   isoDate,
-  isAIRelated,
 } from './utils';
 
 const SCRAPER = 'github';
