@@ -221,11 +221,61 @@ const platformBadge: Record<string, "danger" | "info" | "warning" | "success" | 
 
 export default function TrendsPage() {
   const [loading, setLoading] = useState(true);
+  const [trendData, setTrendData] = useState(trends);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(t);
+    async function fetchData() {
+      try {
+        const res = await fetch('/api/trends/predict');
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            setTrendData(json.data);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch trend predictions:', err);
+        // Falls back to mock data already in state
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
   }, []);
+
+  const handleAnalyzeTrends = async () => {
+    setAnalyzing(true);
+    try {
+      const res = await fetch('/api/trends/predict', { method: 'POST' });
+      if (res.ok) {
+        const json = await res.json();
+        setToast(json.message || 'Trend analysis completed!');
+        // Re-fetch trends after analysis
+        try {
+          const refreshRes = await fetch('/api/trends/predict');
+          if (refreshRes.ok) {
+            const refreshJson = await refreshRes.json();
+            if (refreshJson.success && refreshJson.data) {
+              setTrendData(refreshJson.data);
+            }
+          }
+        } catch {
+          // ignore re-fetch failure
+        }
+      } else {
+        setToast('Analysis triggered but returned an error.');
+      }
+    } catch (err) {
+      console.error('Trend analysis failed:', err);
+      setToast('Trend analysis request failed. Please try again.');
+    } finally {
+      setAnalyzing(false);
+      setTimeout(() => setToast(null), 4000);
+    }
+  };
 
   if (loading) {
     return (
@@ -244,17 +294,36 @@ export default function TrendsPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 p-6 space-y-6">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 bg-emerald-500/90 text-white px-4 py-3 rounded-lg shadow-lg text-sm animate-in fade-in slide-in-from-top-2">
+          {toast}
+        </div>
+      )}
+
+      {/* Error Alert */}
+      {error && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-center justify-between">
+          <span className="text-sm text-amber-400">{error}</span>
+          <button onClick={() => setError(null)} className="text-amber-400 hover:text-amber-300 text-sm">Dismiss</button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <TrendingUp className="h-6 w-6 text-emerald-400" /> Trend Predictions
           </h1>
-          <p className="text-gray-400 text-sm mt-1">AI-powered trend detection across {trends.length} active topics</p>
+          <p className="text-gray-400 text-sm mt-1">AI-powered trend detection across {trendData.length} active topics</p>
         </div>
         <div className="flex items-center gap-3">
           <Badge variant="success" className="gap-1"><Target className="h-3 w-3" /> {avgAccuracy}% avg accuracy</Badge>
-          <Badge variant="info" className="gap-1">{trends.filter((t) => t.velocity === "accelerating").length} accelerating</Badge>
+          <Badge variant="info" className="gap-1">{trendData.filter((t) => t.velocity === "accelerating").length} accelerating</Badge>
+          <Button onClick={handleAnalyzeTrends} loading={analyzing} className="gap-2">
+            <Zap className={`h-4 w-4 ${analyzing ? "animate-spin" : ""}`} />
+            {analyzing ? 'Analyzing...' : 'Analyze Trends'}
+          </Button>
         </div>
       </div>
 
@@ -285,7 +354,7 @@ export default function TrendsPage() {
 
       {/* Trend Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {trends.map((trend) => {
+        {trendData.map((trend) => {
           const vel = velocityConfig[trend.velocity];
           const VelIcon = vel.icon;
           return (

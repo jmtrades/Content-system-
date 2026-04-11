@@ -9,9 +9,11 @@ import {
   Clock,
   Target,
   Activity,
+  RefreshCw,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableHeader,
@@ -34,14 +36,14 @@ import { formatNumber } from "@/lib/utils";
 const platforms = ["All", "TikTok", "Instagram", "YouTube", "LinkedIn"];
 const dateRanges = ["7d", "30d", "90d"];
 
-const engagementData = Array.from({ length: 30 }, (_, i) => ({
+const mockEngagementData = Array.from({ length: 30 }, (_, i) => ({
   day: `Apr ${i + 1}`,
   views: Math.round(12000 + Math.random() * 45000 + Math.sin(i * 0.3) * 15000),
   engagement: Math.round(800 + Math.random() * 3200 + Math.sin(i * 0.5) * 1000),
   likes: Math.round(600 + Math.random() * 2400 + Math.sin(i * 0.4) * 800),
 }));
 
-const hookPerformance = [
+const mockHookPerformance = [
   { hook: "I just discovered something that changes everything...", retention: 94, views: 892000, platform: "TikTok" },
   { hook: "Stop doing this if you want to grow on social media...", retention: 91, views: 654000, platform: "Instagram" },
   { hook: "Nobody is talking about this AI tool and it's insane...", retention: 89, views: 523000, platform: "TikTok" },
@@ -54,7 +56,7 @@ const hookPerformance = [
   { hook: "The AI tool that 99% of creators are sleeping on...", retention: 76, views: 176000, platform: "TikTok" },
 ];
 
-const pillarBreakdown = [
+const mockPillarBreakdown = [
   { name: "AI News", value: 32, color: "#f87171" },
   { name: "Tutorials", value: 25, color: "#a78bfa" },
   { name: "Tools Review", value: 18, color: "#60a5fa" },
@@ -65,7 +67,7 @@ const pillarBreakdown = [
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const hours = ["6am", "7am", "8am", "9am", "10am", "11am", "12pm", "1pm", "2pm", "3pm", "4pm", "5pm", "6pm", "7pm", "8pm", "9pm", "10pm", "11pm"];
 
-const postingHeatmapData = days.flatMap((day) =>
+const mockPostingHeatmapData = days.flatMap((day) =>
   hours.map((hour) => {
     let baseValue = 0;
     if (["9am", "10am", "11am", "12pm"].includes(hour)) baseValue += 6;
@@ -76,26 +78,20 @@ const postingHeatmapData = days.flatMap((day) =>
   })
 );
 
-const platformComparison = [
+const mockPlatformComparison = [
   { name: "TikTok", views: 2340000, engagement: 7.8, followers: 52300, posts: 18 },
   { name: "Instagram", views: 890000, engagement: 5.2, followers: 34200, posts: 12 },
   { name: "YouTube", views: 567000, engagement: 8.4, followers: 22100, posts: 4 },
   { name: "LinkedIn", views: 234000, engagement: 6.1, followers: 19243, posts: 8 },
 ];
 
-const audienceGrowth = [
+const mockAudienceGrowth = [
   { platform: "TikTok", current: 52300, daily: 420, weekly: 2940, monthly: 12600, trend: "up" as const },
   { platform: "Instagram", current: 34200, daily: 180, weekly: 1260, monthly: 5400, trend: "up" as const },
   { platform: "YouTube", current: 22100, daily: 95, weekly: 665, monthly: 2850, trend: "up" as const },
   { platform: "LinkedIn", current: 19243, daily: 65, weekly: 455, monthly: 1950, trend: "up" as const },
   { platform: "Newsletter", current: 8420, daily: 32, weekly: 224, monthly: 960, trend: "up" as const },
 ];
-
-const platformBarData = platformComparison.map((p) => ({
-  name: p.name,
-  Views: p.views / 1000,
-  Engagement: p.engagement * 1000,
-}));
 
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
@@ -105,11 +101,57 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("30d");
   const [platform, setPlatform] = useState("All");
+  const [engagementData, setEngagementData] = useState(mockEngagementData);
+  const [hookPerformance, setHookPerformance] = useState(mockHookPerformance);
+  const [pillarBreakdown, setPillarBreakdown] = useState(mockPillarBreakdown);
+  const [postingHeatmapData, setPostingHeatmapData] = useState(mockPostingHeatmapData);
+  const [platformComparison, setPlatformComparison] = useState(mockPlatformComparison);
+  const [audienceGrowth, setAudienceGrowth] = useState(mockAudienceGrowth);
+  const [optimizations, setOptimizations] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(t);
+    async function fetchData() {
+      try {
+        const [reportRes, optimizeRes] = await Promise.allSettled([
+          fetch('/api/analytics/report?period=weekly'),
+          fetch('/api/analytics/optimize'),
+        ]);
+
+        if (reportRes.status === 'fulfilled' && reportRes.value.ok) {
+          const json = await reportRes.value.json();
+          if (json.success && json.data) {
+            const d = json.data;
+            if (d.engagementData) setEngagementData(d.engagementData);
+            if (d.hookPerformance) setHookPerformance(d.hookPerformance);
+            if (d.pillarBreakdown) setPillarBreakdown(d.pillarBreakdown);
+            if (d.postingHeatmap) setPostingHeatmapData(d.postingHeatmap);
+            if (d.platformComparison) setPlatformComparison(d.platformComparison);
+            if (d.audienceGrowth) setAudienceGrowth(d.audienceGrowth);
+          }
+        }
+
+        if (optimizeRes.status === 'fulfilled' && optimizeRes.value.ok) {
+          const json = await optimizeRes.value.json();
+          if (json.success && json.data) {
+            setOptimizations(json.data.recommendations || json.data);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch analytics data:', err);
+        setError('Some analytics data could not be loaded. Showing cached data.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
   }, []);
+
+  const platformBarData = platformComparison.map((p) => ({
+    name: p.name,
+    Views: p.views / 1000,
+    Engagement: p.engagement * 1000,
+  }));
 
   if (loading) {
     return (
@@ -127,6 +169,14 @@ export default function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 p-6 space-y-6">
+      {/* Error Alert */}
+      {error && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-center justify-between">
+          <span className="text-sm text-amber-400">{error}</span>
+          <button onClick={() => setError(null)} className="text-amber-400 hover:text-amber-300 text-sm">Dismiss</button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
@@ -136,6 +186,22 @@ export default function AnalyticsPage() {
           <p className="text-gray-400 text-sm mt-1">Deep dive into your content performance metrics</p>
         </div>
       </div>
+
+      {/* Optimization Recommendations */}
+      {optimizations.length > 0 && (
+        <Card className="border-blue-500/30">
+          <CardContent className="p-4">
+            <p className="text-sm font-medium text-blue-400 mb-2">Optimization Recommendations</p>
+            <ul className="space-y-1">
+              {optimizations.map((rec, i) => (
+                <li key={i} className="text-sm text-gray-300 flex items-start gap-2">
+                  <span className="text-blue-400 mt-0.5">-</span> {typeof rec === 'string' ? rec : JSON.stringify(rec)}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Controls */}
       <div className="flex items-center justify-between flex-wrap gap-4">

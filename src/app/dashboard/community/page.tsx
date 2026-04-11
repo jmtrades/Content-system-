@@ -133,19 +133,46 @@ const platformBadge: Record<string, "danger" | "info" | "warning" | "success"> =
 
 export default function CommunityPage() {
   const [loading, setLoading] = useState(true);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<Comment[]>(mockComments);
+  const [dms, setDms] = useState<DM[]>(mockDMs);
   const [platformFilter, setPlatformFilter] = useState("All");
   const [sentimentFilter, setSentimentFilter] = useState("All");
   const [respondedFilter, setRespondedFilter] = useState("All");
   const [editingResponse, setEditingResponse] = useState<number | null>(null);
   const [editedText, setEditedText] = useState("");
+  const [respondingId, setRespondingId] = useState<number | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      setComments(mockComments);
-      setLoading(false);
-    }, 600);
-    return () => clearTimeout(t);
+    async function fetchData() {
+      try {
+        const [commentsRes, dmsRes] = await Promise.allSettled([
+          fetch('/api/community/comments?limit=50'),
+          fetch('/api/community/dms'),
+        ]);
+
+        if (commentsRes.status === 'fulfilled' && commentsRes.value.ok) {
+          const json = await commentsRes.value.json();
+          if (json.success && json.data) {
+            setComments(json.data);
+          }
+        }
+
+        if (dmsRes.status === 'fulfilled' && dmsRes.value.ok) {
+          const json = await dmsRes.value.json();
+          if (json.success && json.data) {
+            setDms(json.data);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch community data:', err);
+        setError('Some community data could not be loaded. Showing cached data.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
   }, []);
 
   const filteredComments = comments.filter((c) => {
@@ -156,8 +183,30 @@ export default function CommunityPage() {
     return true;
   });
 
-  function handleRespond(id: number) {
-    setComments((prev) => prev.map((c) => (c.id === id ? { ...c, responded: true } : c)));
+  async function handleRespond(id: number) {
+    setRespondingId(id);
+    const comment = comments.find((c) => c.id === id);
+    const responseText = editingResponse === id ? editedText : comment?.autoResponse || '';
+    try {
+      const res = await fetch('/api/community/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commentId: id, response: responseText }),
+      });
+      if (res.ok) {
+        setToast('Response sent successfully!');
+      } else {
+        setToast('Response sent (locally). API returned an error.');
+      }
+    } catch (err) {
+      console.error('Failed to post response:', err);
+      setToast('Response saved locally. API unavailable.');
+    } finally {
+      setComments((prev) => prev.map((c) => (c.id === id ? { ...c, responded: true } : c)));
+      setEditingResponse(null);
+      setRespondingId(null);
+      setTimeout(() => setToast(null), 4000);
+    }
   }
 
   function startEditing(id: number, text: string) {
@@ -181,6 +230,21 @@ export default function CommunityPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 p-6 space-y-6">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 bg-emerald-500/90 text-white px-4 py-3 rounded-lg shadow-lg text-sm animate-in fade-in slide-in-from-top-2">
+          {toast}
+        </div>
+      )}
+
+      {/* Error Alert */}
+      {error && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-center justify-between">
+          <span className="text-sm text-amber-400">{error}</span>
+          <button onClick={() => setError(null)} className="text-amber-400 hover:text-amber-300 text-sm">Dismiss</button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
@@ -194,7 +258,7 @@ export default function CommunityPage() {
             {comments.filter((c) => !c.responded).length} pending
           </Badge>
           <Badge variant="info" className="gap-1">
-            {mockDMs.filter((d) => d.status === "unread").length} unread DMs
+            {dms.filter((d) => d.status === "unread").length} unread DMs
           </Badge>
         </div>
       </div>
@@ -274,8 +338,8 @@ export default function CommunityPage() {
                               <p className="text-sm text-gray-300 leading-relaxed">{c.autoResponse}</p>
                             )}
                             <div className="flex items-center gap-2 mt-3">
-                              <Button size="sm" className="gap-1" onClick={() => handleRespond(c.id)}>
-                                <Send className="h-3 w-3" /> Respond
+                              <Button size="sm" className="gap-1" onClick={() => handleRespond(c.id)} loading={respondingId === c.id}>
+                                <Send className="h-3 w-3" /> {respondingId === c.id ? 'Sending...' : 'Respond'}
                               </Button>
                               {editingResponse !== c.id ? (
                                 <Button variant="outline" size="sm" onClick={() => startEditing(c.id, c.autoResponse)}>
@@ -304,7 +368,7 @@ export default function CommunityPage() {
         {/* DMs Tab */}
         <TabsContent value="dms">
           <div className="space-y-3">
-            {mockDMs.map((dm) => {
+            {dms.map((dm) => {
               const sConfig = dmStatusConfig[dm.status];
               const iConfig = intentConfig[dm.intent];
               return (

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Film,
   FileText,
@@ -39,7 +39,7 @@ interface Script {
   estimatedLength: string;
 }
 
-const scripts: Script[] = [
+const mockScripts: Script[] = [
   { id: 1, title: "Why GPT-5 Changes Everything for Creators", hook: "OpenAI just dropped a bomb that will change how every creator works forever...", pillar: "AI News", platform: "TikTok", status: "approved", wordCount: 320, createdAt: "2026-04-11", estimatedLength: "1:45" },
   { id: 2, title: "5 AI Tools That Replaced My Entire Team", hook: "I fired my editor, designer, and social media manager. Here's what I use instead...", pillar: "Tools", platform: "YouTube", status: "filmed", wordCount: 1850, createdAt: "2026-04-10", estimatedLength: "12:30" },
   { id: 3, title: "The $0 to $10K AI Business Blueprint", hook: "I went from zero to $10K/month using only free AI tools. Here's the exact blueprint...", pillar: "Business", platform: "YouTube", status: "edited", wordCount: 2100, createdAt: "2026-04-09", estimatedLength: "15:00" },
@@ -63,7 +63,7 @@ interface VideoJob {
   startedAt: string;
 }
 
-const videoJobs: VideoJob[] = [
+const mockVideoJobs: VideoJob[] = [
   { id: 1, title: "5 AI Tools That Replaced My Team", platform: "YouTube", status: "rendering", progress: 72, duration: "12:30", fileSize: "1.2 GB", startedAt: "2026-04-11T10:30:00Z" },
   { id: 2, title: "GPT-5 Breakdown Short", platform: "TikTok", status: "complete", progress: 100, duration: "1:45", fileSize: "85 MB", startedAt: "2026-04-11T09:00:00Z" },
   { id: 3, title: "$0 to $10K Blueprint", platform: "YouTube", status: "processing", progress: 45, duration: "15:00", fileSize: "1.8 GB", startedAt: "2026-04-11T11:00:00Z" },
@@ -153,15 +153,107 @@ const pillarColors: Record<string, string> = {
 
 export default function StudioPage() {
   const [loading, setLoading] = useState(true);
+  const [scripts, setScripts] = useState<Script[]>(mockScripts);
+  const [videoJobs, setVideoJobs] = useState<VideoJob[]>(mockVideoJobs);
   const [showGenForm, setShowGenForm] = useState(false);
   const [genTopic, setGenTopic] = useState("");
   const [genPillar, setGenPillar] = useState("AI News");
   const [genPlatform, setGenPlatform] = useState("TikTok");
+  const [generating, setGenerating] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(t);
+    async function fetchData() {
+      try {
+        const [scriptsRes, jobsRes] = await Promise.allSettled([
+          fetch('/api/scripts/generate'),
+          fetch('/api/studio/jobs'),
+        ]);
+
+        if (scriptsRes.status === 'fulfilled' && scriptsRes.value.ok) {
+          const json = await scriptsRes.value.json();
+          if (json.success && json.data) {
+            setScripts(json.data);
+          }
+        }
+
+        if (jobsRes.status === 'fulfilled' && jobsRes.value.ok) {
+          const json = await jobsRes.value.json();
+          if (json.success && json.data) {
+            setVideoJobs(json.data);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch studio data:', err);
+        setError('Some studio data could not be loaded. Showing cached data.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
   }, []);
+
+  const handleGenerate = async () => {
+    if (!genTopic.trim()) return;
+    setGenerating(true);
+    try {
+      const res = await fetch('/api/scripts/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: genTopic, pillar: genPillar, platform: genPlatform }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        setToast('Script generated successfully!');
+        if (json.data) {
+          setScripts((prev) => [json.data, ...prev]);
+        }
+        setGenTopic('');
+        setShowGenForm(false);
+      } else {
+        setToast('Script generation failed. Please try again.');
+      }
+    } catch (err) {
+      console.error('Script generation failed:', err);
+      setToast('Script generation request failed.');
+    } finally {
+      setGenerating(false);
+      setTimeout(() => setToast(null), 4000);
+    }
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('video', file);
+      const res = await fetch('/api/studio/jobs', {
+        method: 'POST',
+        body: formData,
+      });
+      if (res.ok) {
+        const json = await res.json();
+        setToast(`Video "${file.name}" uploaded successfully!`);
+        if (json.data) {
+          setVideoJobs((prev) => [json.data, ...prev]);
+        }
+      } else {
+        setToast('Video upload failed. Please try again.');
+      }
+    } catch (err) {
+      console.error('Upload failed:', err);
+      setToast('Video upload request failed.');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      setTimeout(() => setToast(null), 4000);
+    }
+  };
 
   if (loading) {
     return (
@@ -187,6 +279,31 @@ export default function StudioPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 p-6 space-y-6">
+      {/* Toast */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 bg-gray-800 border border-gray-700 rounded-lg p-4 shadow-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+          <span className="text-sm text-gray-200">{toast}</span>
+          <button onClick={() => setToast(null)} className="text-gray-400 hover:text-gray-200 text-sm">x</button>
+        </div>
+      )}
+
+      {/* Error Alert */}
+      {error && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-center justify-between">
+          <span className="text-sm text-amber-400">{error}</span>
+          <button onClick={() => setError(null)} className="text-amber-400 hover:text-amber-300 text-sm">Dismiss</button>
+        </div>
+      )}
+
+      {/* Hidden file input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleUpload}
+        accept="video/*"
+        className="hidden"
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
@@ -199,7 +316,7 @@ export default function StudioPage() {
           <Button variant="outline" className="gap-2" onClick={() => setShowGenForm(!showGenForm)}>
             <Zap className="h-4 w-4" /> Generate Script
           </Button>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => fileInputRef.current?.click()} loading={uploading}>
             <Upload className="h-4 w-4" /> Upload Video
           </Button>
         </div>
@@ -222,7 +339,7 @@ export default function StudioPage() {
                 <label className="text-xs text-gray-400 mb-1 block">Platform</label>
                 <Select options={["TikTok", "YouTube", "Instagram", "LinkedIn"].map((p) => ({ value: p, label: p }))} value={genPlatform} onChange={(e) => setGenPlatform(e.target.value)} />
               </div>
-              <Button className="gap-2"><Zap className="h-4 w-4" /> Generate</Button>
+              <Button className="gap-2" onClick={handleGenerate} loading={generating}><Zap className="h-4 w-4" /> Generate</Button>
               <Button variant="ghost" onClick={() => setShowGenForm(false)}>Cancel</Button>
             </div>
           </CardContent>

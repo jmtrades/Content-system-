@@ -32,20 +32,20 @@ import { formatCurrency, formatNumber } from "@/lib/utils";
 /*  Mock Data                                                          */
 /* ------------------------------------------------------------------ */
 
-const revenueCards = [
+const mockRevenueCards = [
   { title: "Today", value: 847.32, change: 18.3, period: "vs yesterday" },
   { title: "This Week", value: 5234.89, change: 12.7, period: "vs last week" },
   { title: "This Month", value: 18432.54, change: 23.1, period: "vs last month" },
   { title: "All Time", value: 127843.21, change: 0, period: "since launch" },
 ];
 
-const revenueTimeline = Array.from({ length: 30 }, (_, i) => ({
+const mockRevenueTimeline = Array.from({ length: 30 }, (_, i) => ({
   day: `Apr ${i + 1}`,
   revenue: Math.round(450 + Math.random() * 800 + Math.sin(i * 0.4) * 200 + (i > 20 ? 300 : 0)),
   sales: Math.round(3 + Math.random() * 8),
 }));
 
-const products = [
+const mockProducts = [
   { name: "AI Content Mastery Course", price: 297, sales: 142, revenue: 42174, conversionRate: 4.2, type: "Course" },
   { name: "Prompt Engineering Templates", price: 47, sales: 834, revenue: 39198, conversionRate: 8.7, type: "Digital" },
   { name: "AI Tools Toolkit Bundle", price: 97, sales: 312, revenue: 30264, conversionRate: 5.4, type: "Digital" },
@@ -54,7 +54,7 @@ const products = [
   { name: "Content Automation Blueprint", price: 197, sales: 15, revenue: 2955, conversionRate: 2.8, type: "Course" },
 ];
 
-const platformROI = [
+const mockPlatformROI = [
   { name: "YouTube", revenue: 48200, adSpend: 2400, roi: 1908 },
   { name: "TikTok", revenue: 36800, adSpend: 1800, roi: 1944 },
   { name: "Instagram", revenue: 22400, adSpend: 3200, roi: 600 },
@@ -62,7 +62,7 @@ const platformROI = [
   { name: "Newsletter", revenue: 7643, adSpend: 200, roi: 3722 },
 ];
 
-const funnelData = [
+const mockFunnelData = [
   { stage: "Views", value: 2340000, color: "#3b82f6" },
   { stage: "Link Clicks", value: 46800, color: "#8b5cf6" },
   { stage: "Landing Page", value: 23400, color: "#a78bfa" },
@@ -70,7 +70,7 @@ const funnelData = [
   { stage: "Purchase", value: 1741, color: "#10b981" },
 ];
 
-const affiliateRevenue = [
+const mockAffiliateRevenue = [
   { name: "Opus Clip", clicks: 12400, sales: 186, revenue: 5580, commission: "30%" },
   { name: "Descript", clicks: 8900, sales: 89, revenue: 2670, commission: "25%" },
   { name: "Notion AI", clicks: 7200, sales: 144, revenue: 1440, commission: "20%" },
@@ -79,10 +79,20 @@ const affiliateRevenue = [
   { name: "Claude Pro", clicks: 3800, sales: 76, revenue: 1520, commission: "25%" },
 ];
 
-const mrrData = Array.from({ length: 12 }, (_, i) => ({
+const mockMrrData = Array.from({ length: 12 }, (_, i) => ({
   month: ["May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr"][i],
   mrr: Math.round(1200 + i * 340 + Math.random() * 200),
 }));
+
+interface RevenueEvent {
+  id: number;
+  type: string;
+  description: string;
+  amount: number;
+  time: string;
+}
+
+const mockRevenueEvents: RevenueEvent[] = [];
 
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
@@ -90,10 +100,52 @@ const mrrData = Array.from({ length: 12 }, (_, i) => ({
 
 export default function RevenuePage() {
   const [loading, setLoading] = useState(true);
+  const [revenueCards, setRevenueCards] = useState(mockRevenueCards);
+  const [revenueTimeline, setRevenueTimeline] = useState(mockRevenueTimeline);
+  const [products, setProducts] = useState(mockProducts);
+  const [platformROI, setPlatformROI] = useState(mockPlatformROI);
+  const [funnelData, setFunnelData] = useState(mockFunnelData);
+  const [affiliateRevenue, setAffiliateRevenue] = useState(mockAffiliateRevenue);
+  const [mrrData, setMrrData] = useState(mockMrrData);
+  const [revenueEvents, setRevenueEvents] = useState<RevenueEvent[]>(mockRevenueEvents);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(t);
+    async function fetchData() {
+      try {
+        const [dashboardRes, eventsRes] = await Promise.allSettled([
+          fetch('/api/revenue/dashboard'),
+          fetch('/api/revenue/events?limit=20'),
+        ]);
+
+        if (dashboardRes.status === 'fulfilled' && dashboardRes.value.ok) {
+          const json = await dashboardRes.value.json();
+          if (json.success && json.data) {
+            const d = json.data;
+            if (d.revenueCards) setRevenueCards(d.revenueCards);
+            if (d.revenueTimeline) setRevenueTimeline(d.revenueTimeline);
+            if (d.products) setProducts(d.products);
+            if (d.platformROI) setPlatformROI(d.platformROI);
+            if (d.funnelData) setFunnelData(d.funnelData);
+            if (d.affiliateRevenue) setAffiliateRevenue(d.affiliateRevenue);
+            if (d.mrrData) setMrrData(d.mrrData);
+          }
+        }
+
+        if (eventsRes.status === 'fulfilled' && eventsRes.value.ok) {
+          const json = await eventsRes.value.json();
+          if (json.success && json.data) {
+            setRevenueEvents(json.data);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch revenue data:', err);
+        setError('Some revenue data could not be loaded. Showing cached data.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
   }, []);
 
   if (loading) {
@@ -110,12 +162,20 @@ export default function RevenuePage() {
     );
   }
 
-  const totalRevenue = 127843.21;
+  const totalRevenue = revenueCards.find(c => c.title === "All Time")?.value ?? 127843.21;
   const revenueTarget = 100000;
   const progressToTarget = Math.min((totalRevenue / revenueTarget) * 100, 100);
 
   return (
     <div className="min-h-screen bg-gray-950 p-6 space-y-6">
+      {/* Error Alert */}
+      {error && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-center justify-between">
+          <span className="text-sm text-amber-400">{error}</span>
+          <button onClick={() => setError(null)} className="text-amber-400 hover:text-amber-300 text-sm">Dismiss</button>
+        </div>
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -152,6 +212,31 @@ export default function RevenuePage() {
           );
         })}
       </div>
+
+      {/* Recent Revenue Events */}
+      {revenueEvents.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-amber-400" />
+              Recent Transactions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-h-[200px] overflow-y-auto">
+              {revenueEvents.map((ev) => (
+                <div key={ev.id} className="flex items-center justify-between py-2 border-b border-gray-800 last:border-0">
+                  <div>
+                    <p className="text-sm text-gray-200">{ev.description}</p>
+                    <span className="text-xs text-gray-500">{ev.time}</span>
+                  </div>
+                  <span className="text-sm font-bold text-emerald-400">{formatCurrency(ev.amount)}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Revenue Over Time */}
       <Card>
