@@ -8,22 +8,15 @@ import {
   Zap,
   Target,
   Clock,
-  Globe,
-  BarChart3,
   CheckCircle,
-  XCircle,
   Activity,
   AlertTriangle,
-  Eye,
-  ChevronRight,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LineChartComponent } from "@/components/charts/LineChartComponent";
-import { BarChartComponent } from "@/components/charts/BarChartComponent";
 
 /* ------------------------------------------------------------------ */
 /*  Mock Data                                                          */

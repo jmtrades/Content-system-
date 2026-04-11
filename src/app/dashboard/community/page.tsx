@@ -4,24 +4,18 @@ import React, { useState, useEffect } from "react";
 import {
   MessageSquare,
   MessageCircle,
-  Users,
   Heart,
   Send,
   XCircle,
   Filter,
-  Search,
-  ArrowUp,
-  CheckCircle,
-  AlertTriangle,
   Star,
   DollarSign,
   Eye,
   Target,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";

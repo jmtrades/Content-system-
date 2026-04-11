@@ -178,7 +178,7 @@ async function postToPlatform(
   // - LinkedIn: LinkedIn Marketing API
   // - Twitter/X: X API v2
 
-  const fullCaption = hashtags.length > 0
+  const _fullCaption = hashtags.length > 0
     ? `${caption}\n\n${hashtags.map((h) => (h.startsWith('#') ? h : `#${h}`)).join(' ')}`
     : caption;
 

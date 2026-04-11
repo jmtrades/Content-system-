@@ -110,23 +110,23 @@ export async function POST(req: NextRequest) {
     const svgBuffer = Buffer.from(svg);
     let image = sharp(svgBuffer).resize(dims.width, dims.height);
 
-    let mimeType: string;
+    let _mimeType: string;
     let extension: string;
 
     switch (output_format) {
       case 'jpeg':
         image = image.jpeg({ quality: 90 });
-        mimeType = 'image/jpeg';
+        _mimeType ='image/jpeg';
         extension = 'jpg';
         break;
       case 'webp':
         image = image.webp({ quality: 90 });
-        mimeType = 'image/webp';
+        _mimeType ='image/webp';
         extension = 'webp';
         break;
       default:
         image = image.png();
-        mimeType = 'image/png';
+        _mimeType ='image/png';
         extension = 'png';
         break;
     }

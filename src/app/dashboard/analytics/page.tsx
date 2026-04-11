@@ -3,21 +3,15 @@
 import React, { useState, useEffect } from "react";
 import {
   BarChart3,
-  TrendingUp,
   ArrowUp,
-  ArrowDown,
   Eye,
   Users,
   Clock,
   Target,
   Activity,
-  Heart,
-  MessageCircle,
-  Share2,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableHeader,

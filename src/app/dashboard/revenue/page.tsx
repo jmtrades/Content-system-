@@ -5,12 +5,9 @@ import {
   DollarSign,
   TrendingUp,
   ArrowUp,
-  ArrowDown,
   Target,
-  Eye,
   ShoppingCart,
   CreditCard,
-  Users,
   BarChart3,
   ExternalLink,
   Zap,
@@ -130,7 +127,6 @@ export default function RevenuePage() {
       {/* Revenue Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {revenueCards.map((c) => {
-          const up = c.change > 0;
           return (
             <Card key={c.title}>
               <CardContent className="p-6">

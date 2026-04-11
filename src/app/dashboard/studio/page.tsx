@@ -5,19 +5,14 @@ import {
   Film,
   FileText,
   Calendar,
-  Plus,
   Upload,
   Edit3,
   Trash2,
   CheckCircle,
   Clock,
   Play,
-  Pause,
-  Eye,
   Zap,
-  ChevronRight,
   Video,
-  MoreVertical,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

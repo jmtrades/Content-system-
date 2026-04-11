@@ -5,20 +5,12 @@ import {
   Eye,
   TrendingUp,
   ArrowUp,
-  ArrowDown,
-  Users,
-  Globe,
   Target,
-  Filter,
-  Search,
-  ExternalLink,
-  BarChart3,
   ChevronRight,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import {
   Table,
