@@ -369,8 +369,7 @@ async function sendEmailNotification(
 
   // Dynamically import nodemailer to avoid hard dependency
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
     const nodemailer = require('nodemailer') as any;
 
     const transporter = nodemailer.createTransport({
