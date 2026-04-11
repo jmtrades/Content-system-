@@ -110,11 +110,7 @@ export async function addTextOverlay(
       enable = `:enable='between(t,${t.startTime},${t.endTime})'`;
     }
 
-    const fontFile = t.fontFamily
-      ? `:fontfile='${escapeFilterPath(t.fontFamily)}'`
-      : '';
-
-    return `drawtext=text='${escapedText}':fontsize=${fontSize}:fontcolor=${fontColor}:${x}:${y}${fontFile}${enable}:borderw=2:bordercolor=black@0.6`;
+    return `drawtext=text='${escapedText}':fontsize=${fontSize}:fontcolor=${fontColor}:${x}:${y}${enable}:borderw=2:bordercolor=black@0.6`;
   });
 
   const filterChain = filters.join(',');

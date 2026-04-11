@@ -119,7 +119,7 @@ export class OllamaClient {
     const body = this.buildRequestBody(model, jsonPrompt, false, options);
 
     // Ollama supports format: "json" to force JSON output
-    (body as Record<string, unknown>).format = 'json';
+    (body as unknown as Record<string, unknown>).format = 'json';
 
     const response = await this.fetchWithRetry<OllamaResponse>(
       `${this.baseUrl}/api/generate`,
