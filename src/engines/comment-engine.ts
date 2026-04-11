@@ -1,15 +1,12 @@
 // ============================================================================
-// Comment Engine - Community Engagement & Comment Management
-// ============================================================================
-// Processes incoming comments, classifies sentiment, generates on-brand
-// responses, flags potential customers, and manages DM conversations.
+// Comment Engine - Community engagement & comment management
 // ============================================================================
 
 import { getDb } from '@/lib/db';
 import { getOllama } from '@/lib/ollama';
 
 // ---------------------------------------------------------------------------
-// Inline Types
+// Interfaces
 // ---------------------------------------------------------------------------
 
 interface CommentRow {
@@ -36,6 +33,16 @@ interface CommentClassification {
   suggested_action: 'reply' | 'like' | 'ignore' | 'dm';
 }
 
+interface CommentInput {
+  content: string;
+  author_handle: string;
+  platform: string;
+}
+
+interface ClassificationInput {
+  sentiment: string;
+}
+
 interface DMConversationRow {
   id: string;
   platform: string;
@@ -46,6 +53,14 @@ interface DMConversationRow {
   is_potential_customer: boolean;
   notes: string;
   created_at: string;
+}
+
+interface DMSuggestion {
+  conversation_id: string;
+  user_handle: string;
+  platform: string;
+  intent: string;
+  suggested_response: string;
 }
 
 interface CommentStats {
@@ -61,15 +76,15 @@ interface CommentStats {
 // Logging
 // ---------------------------------------------------------------------------
 
-function log(fn: string, message: string): void {
+function log(message: string): void {
   const ts = new Date().toISOString();
-  console.log(`[${ts}] [comment-engine:${fn}] ${message}`);
+  console.log(`[${ts}] [comment-engine] ${message}`);
 }
 
-function logError(fn: string, message: string, err: unknown): void {
+function logError(message: string, err: unknown): void {
   const ts = new Date().toISOString();
   const detail = err instanceof Error ? err.message : String(err);
-  console.error(`[${ts}] [comment-engine:${fn}] ERROR: ${message} -- ${detail}`);
+  console.error(`[${ts}] [comment-engine] ERROR: ${message} -- ${detail}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -79,20 +94,26 @@ function logError(fn: string, message: string, err: unknown): void {
 export async function classifyComment(content: string): Promise<CommentClassification> {
   const ollama = getOllama();
 
-  const prompt = `You are a social media comment classifier. Analyze the following comment and return a JSON object with these fields:
-- "sentiment": one of "positive", "negative", "neutral", "question"
-- "requires_response": boolean, true if the comment asks a question, reports a problem, or requests engagement
-- "buying_intent": boolean, true if the commenter expresses interest in purchasing, pricing, or product details
-- "suggested_action": one of "reply", "like", "ignore", "dm"
+  const prompt = `You are a social media comment classifier for an AI content creator brand.
+
+Classify the following comment and return JSON with these fields:
+- sentiment: one of "positive", "negative", "neutral", "question"
+- requires_response: boolean - true if the comment asks a question, reports a problem, requests info, or is a meaningful compliment worth acknowledging
+- buying_intent: boolean - true if the commenter mentions wanting to buy, pricing, availability, signing up, or shows purchase-related interest
+- suggested_action: one of "reply", "like", "ignore", "dm"
+  - "reply" if it needs a public response
+  - "like" if it's a simple positive comment (e.g. "great video!")
+  - "ignore" if it's spam, off-topic, or trolling
+  - "dm" if the commenter has buying intent or a sensitive issue
 
 Comment: "${content}"
 
-Respond ONLY with valid JSON. No markdown, no explanation.`;
+Respond ONLY with valid JSON.`;
 
   try {
     const result = await ollama.generateJSON<CommentClassification>('mistral', prompt, {
       temperature: 0.2,
-      max_tokens: 200,
+      max_tokens: 256,
     });
 
     // Validate and normalize the result
@@ -103,15 +124,15 @@ Respond ONLY with valid JSON. No markdown, no explanation.`;
       sentiment: validSentiments.includes(result.sentiment) ? result.sentiment : 'neutral',
       requires_response: Boolean(result.requires_response),
       buying_intent: Boolean(result.buying_intent),
-      suggested_action: validActions.includes(result.suggested_action) ? result.suggested_action : 'ignore',
+      suggested_action: validActions.includes(result.suggested_action) ? result.suggested_action : 'like',
     } as CommentClassification;
   } catch (err) {
-    logError('classifyComment', `Failed to classify comment: "${content.substring(0, 60)}..."`, err);
+    logError('Failed to classify comment', err);
     return {
       sentiment: 'neutral',
       requires_response: false,
       buying_intent: false,
-      suggested_action: 'ignore',
+      suggested_action: 'like',
     };
   }
 }
@@ -121,40 +142,35 @@ Respond ONLY with valid JSON. No markdown, no explanation.`;
 // ---------------------------------------------------------------------------
 
 export async function generateCommentResponse(
-  comment: { content: string; author_handle: string; platform: string },
-  classification: { sentiment: string },
+  comment: CommentInput,
+  classification: ClassificationInput,
 ): Promise<string> {
   const ollama = getOllama();
 
-  const toneGuide =
-    classification.sentiment === 'negative'
-      ? 'Be empathetic, acknowledge their concern, and offer help.'
-      : classification.sentiment === 'question'
-        ? 'Be helpful and informative. Answer the question directly.'
-        : 'Be friendly, grateful, and encourage continued engagement.';
+  const prompt = `You are a friendly, knowledgeable AI content creator responding to a comment on your ${comment.platform} post.
 
-  const prompt = `You are a friendly, knowledgeable AI/tech content creator responding to a comment on ${comment.platform}.
+Your brand voice is:
+- Approachable but authoritative
+- Concise (1-3 sentences max)
+- Helpful and encouraging
+- Never salesy or pushy
+- Uses casual language but stays professional
 
-Tone: ${toneGuide}
-Keep it conversational, natural, and under 280 characters.
-Do NOT use excessive emojis. One emoji max.
-Address them naturally -- do not use their full handle unless it fits.
+The comment was classified as: ${classification.sentiment}
+Comment by @${comment.author_handle}: "${comment.content}"
 
-Their comment: "${comment.content}"
-Their handle: @${comment.author_handle}
-
-Write ONLY the response text. No quotes, no prefix, no explanation.`;
+Write a natural, on-brand response. Do NOT use hashtags. Do NOT start with "Hey" or "Hi" every time - vary your openings. Keep it short and genuine.`;
 
   try {
     const response = await ollama.generate('mistral', prompt, {
       temperature: 0.7,
-      max_tokens: 150,
+      max_tokens: 200,
     });
 
     return response.trim();
   } catch (err) {
-    logError('generateCommentResponse', `Failed to generate response for @${comment.author_handle}`, err);
-    return '';
+    logError(`Failed to generate response for comment by @${comment.author_handle}`, err);
+    throw err;
   }
 }
 
@@ -162,46 +178,52 @@ Write ONLY the response text. No quotes, no prefix, no explanation.`;
 // processComments
 // ---------------------------------------------------------------------------
 
-export async function processComments(): Promise<{ processed: number; responded: number }> {
-  log('processComments', 'Starting comment processing cycle');
-
+export async function processComments(): Promise<{
+  processed: number;
+  responded: number;
+  errors: number;
+}> {
+  log('Starting comment processing...');
   const db = getDb();
-  let processedCount = 0;
-  let respondedCount = 0;
 
-  try {
-    const { data: comments, error } = await db
-      .from('comments')
-      .select('*')
-      .eq('responded', false)
-      .order('created_at', { ascending: true })
-      .limit(30);
+  const { data: comments, error } = await db
+    .from('comments')
+    .select('*')
+    .eq('responded', false)
+    .order('created_at', { ascending: true })
+    .limit(30);
 
-    if (error) {
-      logError('processComments', 'Failed to fetch unprocessed comments', error);
-      return { processed: 0, responded: 0 };
-    }
+  if (error) {
+    logError('Failed to fetch unprocessed comments', error);
+    return { processed: 0, responded: 0, errors: 1 };
+  }
 
-    if (!comments || comments.length === 0) {
-      log('processComments', 'No unprocessed comments found');
-      return { processed: 0, responded: 0 };
-    }
+  if (!comments || comments.length === 0) {
+    log('No unprocessed comments found');
+    return { processed: 0, responded: 0, errors: 0 };
+  }
 
-    log('processComments', `Found ${comments.length} unprocessed comments`);
+  log(`Found ${comments.length} unprocessed comments`);
 
-    for (const comment of comments as CommentRow[]) {
-      try {
-        // Classify the comment
-        const classification = await classifyComment(comment.content);
+  let processed = 0;
+  let responded = 0;
+  let errors = 0;
 
-        const updatePayload: Record<string, unknown> = {
-          sentiment: classification.sentiment,
-          requires_response: classification.requires_response,
-          is_potential_customer: classification.buying_intent,
-        };
+  for (const comment of comments as CommentRow[]) {
+    try {
+      // Step 1: Classify the comment
+      const classification = await classifyComment(comment.content);
 
-        // Generate a response if needed
-        if (classification.requires_response || classification.suggested_action === 'reply') {
+      // Step 2: Build the update payload
+      const updatePayload: Record<string, unknown> = {
+        sentiment: classification.sentiment,
+        requires_response: classification.requires_response,
+        is_potential_customer: classification.buying_intent,
+      };
+
+      // Step 3: Generate a response if needed
+      if (classification.requires_response && classification.suggested_action === 'reply') {
+        try {
           const responseText = await generateCommentResponse(
             {
               content: comment.content,
@@ -211,39 +233,40 @@ export async function processComments(): Promise<{ processed: number; responded:
             { sentiment: classification.sentiment },
           );
 
-          if (responseText) {
-            updatePayload.response_text = responseText;
-            updatePayload.responded = true;
-            updatePayload.responded_at = new Date().toISOString();
-            respondedCount++;
-          }
-        } else {
-          // Mark as responded (no response needed)
+          updatePayload.response_text = responseText;
           updatePayload.responded = true;
           updatePayload.responded_at = new Date().toISOString();
+          responded++;
+        } catch {
+          // Response generation failed, but classification succeeded
+          logError(`Response generation failed for comment ${comment.id}`, 'skipping response');
         }
-
-        const { error: updateErr } = await db
-          .from('comments')
-          .update(updatePayload)
-          .eq('id', comment.id);
-
-        if (updateErr) {
-          logError('processComments', `Failed to update comment ${comment.id}`, updateErr);
-        } else {
-          processedCount++;
-        }
-      } catch (err) {
-        logError('processComments', `Error processing comment ${comment.id}`, err);
+      } else if (classification.suggested_action === 'like' || classification.suggested_action === 'ignore') {
+        // Mark as handled even if no response text is needed
+        updatePayload.responded = true;
+        updatePayload.responded_at = new Date().toISOString();
       }
-    }
 
-    log('processComments', `Cycle complete: ${processedCount} processed, ${respondedCount} responses generated`);
-  } catch (err) {
-    logError('processComments', 'Unexpected error in processing cycle', err);
+      // Step 4: Persist classification + response
+      const { error: updateError } = await db
+        .from('comments')
+        .update(updatePayload)
+        .eq('id', comment.id);
+
+      if (updateError) {
+        logError(`Failed to update comment ${comment.id}`, updateError);
+        errors++;
+      } else {
+        processed++;
+      }
+    } catch (err) {
+      logError(`Error processing comment ${comment.id}`, err);
+      errors++;
+    }
   }
 
-  return { processed: processedCount, responded: respondedCount };
+  log(`Processing complete: ${processed} processed, ${responded} responded, ${errors} errors`);
+  return { processed, responded, errors };
 }
 
 // ---------------------------------------------------------------------------
@@ -251,116 +274,103 @@ export async function processComments(): Promise<{ processed: number; responded:
 // ---------------------------------------------------------------------------
 
 export async function flagPotentialCustomers(): Promise<CommentRow[]> {
-  log('flagPotentialCustomers', 'Querying potential customers from comments');
-
+  log('Fetching potential customers from comments...');
   const db = getDb();
 
-  try {
-    const { data, error } = await db
-      .from('comments')
-      .select('*')
-      .eq('is_potential_customer', true)
-      .order('created_at', { ascending: false })
-      .limit(50);
+  const { data, error } = await db
+    .from('comments')
+    .select('*')
+    .eq('is_potential_customer', true)
+    .order('created_at', { ascending: false })
+    .limit(50);
 
-    if (error) {
-      logError('flagPotentialCustomers', 'Failed to fetch potential customers', error);
-      return [];
-    }
-
-    const customers = (data ?? []) as CommentRow[];
-    log('flagPotentialCustomers', `Found ${customers.length} potential customers`);
-    return customers;
-  } catch (err) {
-    logError('flagPotentialCustomers', 'Unexpected error', err);
+  if (error) {
+    logError('Failed to fetch potential customers', error);
     return [];
   }
+
+  const customers = (data ?? []) as CommentRow[];
+  log(`Found ${customers.length} potential customers`);
+  return customers;
 }
 
 // ---------------------------------------------------------------------------
 // processDMs
 // ---------------------------------------------------------------------------
 
-export async function processDMs(): Promise<{ processed: number; suggestions: number }> {
-  log('processDMs', 'Processing open DM conversations');
-
+export async function processDMs(): Promise<DMSuggestion[]> {
+  log('Processing open DM conversations...');
   const db = getDb();
   const ollama = getOllama();
-  let processedCount = 0;
-  let suggestionCount = 0;
 
-  try {
-    const { data: conversations, error } = await db
-      .from('dm_conversations')
-      .select('*')
-      .eq('status', 'open')
-      .order('last_message_at', { ascending: true })
-      .limit(15);
+  const { data: conversations, error } = await db
+    .from('dm_conversations')
+    .select('*')
+    .eq('status', 'open')
+    .order('last_message_at', { ascending: true })
+    .limit(15);
 
-    if (error) {
-      logError('processDMs', 'Failed to fetch open DM conversations', error);
-      return { processed: 0, suggestions: 0 };
-    }
+  if (error) {
+    logError('Failed to fetch open DM conversations', error);
+    return [];
+  }
 
-    if (!conversations || conversations.length === 0) {
-      log('processDMs', 'No open DM conversations');
-      return { processed: 0, suggestions: 0 };
-    }
+  if (!conversations || conversations.length === 0) {
+    log('No open DM conversations');
+    return [];
+  }
 
-    log('processDMs', `Found ${conversations.length} open DM conversations`);
+  log(`Processing ${conversations.length} open DM conversations`);
+  const suggestions: DMSuggestion[] = [];
 
-    for (const dm of conversations as DMConversationRow[]) {
-      try {
-        const prompt = `You are triaging a DM conversation on ${dm.platform}.
-User: @${dm.user_handle} (${dm.user_name})
-Notes so far: ${dm.notes || 'None'}
+  for (const convo of conversations as DMConversationRow[]) {
+    try {
+      const prompt = `You are an AI content creator brand assistant. Classify the intent of this DM conversation and suggest a response.
 
-Classify this DM and return JSON with:
-- "intent": one of "support", "purchase_inquiry", "collaboration", "spam", "general"
-- "is_potential_customer": boolean
-- "priority": one of "low", "medium", "high"
-- "suggested_response": a brief, helpful response (under 200 chars)
+User: @${convo.user_handle} (${convo.user_name})
+Platform: ${convo.platform}
+Notes: ${convo.notes || 'No prior notes'}
+
+Return JSON with:
+- intent: one of "question", "collaboration", "purchase_interest", "feedback", "support", "spam", "general"
+- suggested_response: a brief, helpful response (1-3 sentences)
+- priority: one of "high", "medium", "low"
 
 Respond ONLY with valid JSON.`;
 
-        const result = await ollama.generateJSON<{
-          intent: string;
-          is_potential_customer: boolean;
-          priority: string;
-          suggested_response: string;
-        }>('mistral', prompt, { temperature: 0.3, max_tokens: 300 });
+      const result = await ollama.generateJSON<{
+        intent: string;
+        suggested_response: string;
+        priority: string;
+      }>('mistral', prompt, {
+        temperature: 0.3,
+        max_tokens: 300,
+      });
 
-        const updatePayload: Record<string, unknown> = {
-          is_potential_customer: Boolean(result.is_potential_customer),
-          notes: `[Auto-classified] Intent: ${result.intent}, Priority: ${result.priority}. Suggested: ${result.suggested_response}`,
-        };
+      suggestions.push({
+        conversation_id: convo.id,
+        user_handle: convo.user_handle,
+        platform: convo.platform,
+        intent: result.intent || 'general',
+        suggested_response: result.suggested_response || '',
+      });
 
-        if (result.intent === 'spam') {
-          updatePayload.status = 'spam';
-        }
-
-        const { error: updateErr } = await db
-          .from('dm_conversations')
-          .update(updatePayload)
-          .eq('id', dm.id);
-
-        if (updateErr) {
-          logError('processDMs', `Failed to update DM ${dm.id}`, updateErr);
-        } else {
-          processedCount++;
-          if (result.suggested_response) suggestionCount++;
-        }
-      } catch (err) {
-        logError('processDMs', `Error processing DM ${dm.id}`, err);
-      }
+      // Update the conversation with notes about classification
+      const updatedNotes = `${convo.notes || ''}\n[auto] Intent: ${result.intent}, Priority: ${result.priority}`.trim();
+      await db
+        .from('dm_conversations')
+        .update({
+          notes: updatedNotes,
+          is_potential_customer: result.intent === 'purchase_interest',
+        })
+        .eq('id', convo.id);
+    } catch (err) {
+      logError(`Failed to process DM conversation ${convo.id}`, err);
     }
-
-    log('processDMs', `Cycle complete: ${processedCount} processed, ${suggestionCount} suggestions generated`);
-  } catch (err) {
-    logError('processDMs', 'Unexpected error in DM processing', err);
   }
 
-  return { processed: processedCount, suggestions: suggestionCount };
+  log(`Generated ${suggestions.length} DM response suggestions`);
+  return suggestions;
 }
 
 // ---------------------------------------------------------------------------
@@ -368,63 +378,66 @@ Respond ONLY with valid JSON.`;
 // ---------------------------------------------------------------------------
 
 export async function getCommentStats(): Promise<CommentStats> {
-  log('getCommentStats', 'Gathering comment statistics');
-
+  log('Calculating comment stats...');
   const db = getDb();
 
-  const stats: CommentStats = {
-    total: 0,
-    by_sentiment: {},
-    by_platform: {},
-    responded: 0,
-    unresponded: 0,
-    potential_customers: 0,
-  };
+  const { data: allComments, error } = await db
+    .from('comments')
+    .select('id, sentiment, platform, responded, is_potential_customer');
 
-  try {
-    // Fetch all comments for aggregation
-    const { data: comments, error } = await db
-      .from('comments')
-      .select('id, sentiment, platform, responded, is_potential_customer');
-
-    if (error) {
-      logError('getCommentStats', 'Failed to fetch comments for stats', error);
-      return stats;
-    }
-
-    if (!comments || comments.length === 0) {
-      return stats;
-    }
-
-    stats.total = comments.length;
-
-    for (const c of comments) {
-      // Sentiment counts
-      const sentiment = c.sentiment ?? 'unclassified';
-      stats.by_sentiment[sentiment] = (stats.by_sentiment[sentiment] ?? 0) + 1;
-
-      // Platform counts
-      const platform = c.platform ?? 'unknown';
-      stats.by_platform[platform] = (stats.by_platform[platform] ?? 0) + 1;
-
-      // Responded vs unresponded
-      if (c.responded) {
-        stats.responded++;
-      } else {
-        stats.unresponded++;
-      }
-
-      // Potential customers
-      if (c.is_potential_customer) {
-        stats.potential_customers++;
-      }
-    }
-
-    log('getCommentStats', `Stats: ${stats.total} total, ${stats.responded} responded, ${stats.potential_customers} potential customers`);
-  } catch (err) {
-    logError('getCommentStats', 'Unexpected error', err);
+  if (error) {
+    logError('Failed to fetch comments for stats', error);
+    return {
+      total: 0,
+      by_sentiment: {},
+      by_platform: {},
+      responded: 0,
+      unresponded: 0,
+      potential_customers: 0,
+    };
   }
 
+  const comments = (allComments ?? []) as Array<{
+    id: string;
+    sentiment: string | null;
+    platform: string;
+    responded: boolean;
+    is_potential_customer: boolean;
+  }>;
+
+  const by_sentiment: Record<string, number> = {};
+  const by_platform: Record<string, number> = {};
+  let respondedCount = 0;
+  let unrespondedCount = 0;
+  let potentialCustomers = 0;
+
+  for (const c of comments) {
+    const sentiment = c.sentiment ?? 'unclassified';
+    by_sentiment[sentiment] = (by_sentiment[sentiment] ?? 0) + 1;
+
+    by_platform[c.platform] = (by_platform[c.platform] ?? 0) + 1;
+
+    if (c.responded) {
+      respondedCount++;
+    } else {
+      unrespondedCount++;
+    }
+
+    if (c.is_potential_customer) {
+      potentialCustomers++;
+    }
+  }
+
+  const stats: CommentStats = {
+    total: comments.length,
+    by_sentiment,
+    by_platform,
+    responded: respondedCount,
+    unresponded: unrespondedCount,
+    potential_customers: potentialCustomers,
+  };
+
+  log(`Stats: ${stats.total} total, ${stats.responded} responded, ${stats.potential_customers} potential customers`);
   return stats;
 }
 
@@ -434,56 +447,43 @@ export async function getCommentStats(): Promise<CommentStats> {
 
 export async function batchClassify(
   comments: { id: string; content: string }[],
-): Promise<{ id: string; classification: CommentClassification }[]> {
-  log('batchClassify', `Batch classifying ${comments.length} comments`);
+): Promise<Map<string, CommentClassification>> {
+  log(`Batch classifying ${comments.length} comments...`);
 
-  const results: { id: string; classification: CommentClassification }[] = [];
+  const results = new Map<string, CommentClassification>();
 
-  // Process in chunks of 5 to avoid overwhelming Ollama
+  if (comments.length === 0) {
+    return results;
+  }
+
+  // Process in chunks of 5 to avoid overloading Ollama
   const CHUNK_SIZE = 5;
 
   for (let i = 0; i < comments.length; i += CHUNK_SIZE) {
     const chunk = comments.slice(i, i + CHUNK_SIZE);
+    const chunkIndex = Math.floor(i / CHUNK_SIZE) + 1;
+    const totalChunks = Math.ceil(comments.length / CHUNK_SIZE);
 
-    const chunkResults = await Promise.allSettled(
-      chunk.map(async (comment) => {
+    log(`Processing chunk ${chunkIndex}/${totalChunks} (${chunk.length} comments)`);
+
+    const chunkPromises = chunk.map(async (comment) => {
+      try {
         const classification = await classifyComment(comment.content);
-        return { id: comment.id, classification };
-      }),
-    );
-
-    for (const result of chunkResults) {
-      if (result.status === 'fulfilled') {
-        results.push(result.value);
-      } else {
-        logError('batchClassify', 'Failed to classify a comment in batch', result.reason);
+        results.set(comment.id, classification);
+      } catch (err) {
+        logError(`Failed to classify comment ${comment.id}`, err);
+        results.set(comment.id, {
+          sentiment: 'neutral',
+          requires_response: false,
+          buying_intent: false,
+          suggested_action: 'like',
+        });
       }
-    }
+    });
 
-    log('batchClassify', `Processed chunk ${Math.floor(i / CHUNK_SIZE) + 1}/${Math.ceil(comments.length / CHUNK_SIZE)}`);
+    await Promise.all(chunkPromises);
   }
 
-  // Persist classifications to the database
-  const db = getDb();
-  for (const item of results) {
-    try {
-      const { error } = await db
-        .from('comments')
-        .update({
-          sentiment: item.classification.sentiment,
-          requires_response: item.classification.requires_response,
-          is_potential_customer: item.classification.buying_intent,
-        })
-        .eq('id', item.id);
-
-      if (error) {
-        logError('batchClassify', `Failed to persist classification for comment ${item.id}`, error);
-      }
-    } catch (err) {
-      logError('batchClassify', `Error persisting classification for ${item.id}`, err);
-    }
-  }
-
-  log('batchClassify', `Batch classification complete: ${results.length}/${comments.length} classified`);
+  log(`Batch classification complete: ${results.size} comments classified`);
   return results;
 }
