@@ -3,28 +3,7 @@
 // ============================================================================
 
 import sharp from 'sharp';
-import type { Platform, ThumbnailStyle } from '@/types';
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-export interface ThumbnailConfig {
-  title: string;
-  subtitle?: string;
-  style: ThumbnailStyle;
-  platform: Platform;
-  background?: string;       // Path to a background image file
-  backgroundColor?: string;  // Hex colour, e.g. '#1a1a2e'
-  accentColor?: string;      // Hex colour for accents / gradient
-  fontSize?: number;         // Override default title font size
-  outputPath?: string;       // If not set, returns buffer only
-}
-
-export interface PlatformDimensions {
-  width: number;
-  height: number;
-}
+import type { Platform, ThumbnailStyle, ThumbnailConfig, PlatformDimensions } from '@/types';
 
 // ---------------------------------------------------------------------------
 // Platform dimensions

@@ -718,14 +718,26 @@ export interface WeeklyReport {
 // Thumbnail Types
 // ---------------------------------------------------------------------------
 
+export type ThumbnailStyle = 'bold' | 'minimal' | 'gradient' | 'overlay';
+
 export interface ThumbnailConfig {
-  scriptId: string;
+  scriptId?: string;
   title: string;
   subtitle?: string;
-  style: 'bold' | 'minimal' | 'dramatic' | 'clean';
+  style: ThumbnailStyle;
   platform: Platform;
+  background?: string;
   backgroundImagePath?: string;
+  backgroundColor?: string;
+  accentColor?: string;
   brandColor?: string;
+  fontSize?: number;
+  outputPath?: string;
+}
+
+export interface PlatformDimensions {
+  width: number;
+  height: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -739,6 +751,18 @@ export interface CaptionSegment {
   text: string;
 }
 
+export interface CaptionStyle {
+  fontFamily?: string;
+  fontSize?: number;
+  primaryColor?: string;
+  outlineColor?: string;
+  outlineWidth?: number;
+  backgroundColor?: string;
+  bold?: boolean;
+  alignment?: number;
+  marginV?: number;
+}
+
 export interface CaptionStylePreset {
   name: string;
   fontFamily: string;
@@ -748,4 +772,20 @@ export interface CaptionStylePreset {
   outlineWidth: number;
   backgroundColor: string;
   position: 'bottom' | 'center' | 'top';
+}
+
+// ---------------------------------------------------------------------------
+// Video Info (FFprobe result)
+// ---------------------------------------------------------------------------
+
+export interface VideoInfo {
+  duration: number;
+  width: number;
+  height: number;
+  codec: string;
+  fps: number;
+  bitrate: number;
+  audioCodec?: string;
+  audioSampleRate?: number;
+  fileSize: number;
 }
