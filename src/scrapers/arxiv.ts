@@ -96,7 +96,7 @@ async function scanCategory(categoryId: string, categoryName: string): Promise<S
           .trim();
 
         const authors = parseAuthors(
-          (entry as Record<string, unknown>).creator as string | undefined,
+          (entry as unknown as Record<string, unknown>).creator as string | undefined,
         );
         const published = entry.pubDate || entry.isoDate || '';
 

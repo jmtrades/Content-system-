@@ -82,17 +82,18 @@ async function scanChannel(channel: YouTubeChannel): Promise<ScrapedItem[]> {
         const title = (entry.title || '').trim();
         if (!title) continue;
 
+        const entryAny = entry as unknown as Record<string, unknown>;
         const videoId =
-          (entry as Record<string, unknown>).ytVideoId as string ||
-          entry.id?.replace('yt:video:', '') ||
+          (entryAny.ytVideoId as string) ||
+          (typeof entryAny.id === 'string' ? entryAny.id.replace('yt:video:', '') : '') ||
           '';
         const videoUrl = videoId
           ? `https://www.youtube.com/watch?v=${videoId}`
           : entry.link || '';
 
         // Extract thumbnail URL
-        const mediaGroup = (entry as Record<string, unknown>).mediaGroup as Record<string, unknown> | undefined;
-        const mediaThumbnail = (entry as Record<string, unknown>).mediaThumbnail as Record<string, string> | undefined;
+        const mediaGroup = entryAny.mediaGroup as Record<string, unknown> | undefined;
+        const mediaThumbnail = entryAny.mediaThumbnail as Record<string, string> | undefined;
 
         let thumbnailUrl = '';
         if (mediaThumbnail?.url) {
