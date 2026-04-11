@@ -1,0 +1,68 @@
+# ============================================================================
+# Content Empire - Docker Compose (Local Services)
+# ============================================================================
+#
+# Usage:
+#   docker compose up -d          Start all services in background
+#   docker compose up -d ollama   Start only Ollama
+#   docker compose logs -f        Follow logs from all services
+#   docker compose down           Stop all services
+#
+# GPU Support (NVIDIA):
+#   The Ollama service is configured to use NVIDIA GPUs when available.
+#   If you do not have an NVIDIA GPU, Ollama will fall back to CPU.
+#   To disable GPU passthrough, remove the "deploy" block below.
+#
+# After starting Ollama, pull the required models:
+#   docker compose exec ollama ollama pull mistral
+#   docker compose exec ollama ollama pull llama3:8b
+#
+# ============================================================================
+
+services:
+  # --------------------------------------------------------------------------
+  # Ollama - Local LLM inference server
+  # --------------------------------------------------------------------------
+  # Provides the local AI backbone for script generation, content analysis,
+  # comment classification, and trend detection.
+  #
+  # API is available at http://localhost:11434
+  # Web UI (if using Open WebUI separately) can connect to this endpoint.
+  # --------------------------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: content-empire-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      # Persist downloaded models across container restarts
+      - ollama_data:/root/.ollama
+    environment:
+      # Number of models to keep in memory simultaneously (adjust based on RAM)
+      - OLLAMA_NUM_PARALLEL=2
+      # Maximum number of queued requests
+      - OLLAMA_MAX_QUEUE=512
+    # GPU passthrough for NVIDIA GPUs.
+    # If you do not have an NVIDIA GPU or nvidia-container-toolkit installed,
+    # remove the entire "deploy" block. Ollama will use CPU instead.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  # Named volume for Ollama model storage
+  # Models are large (2-8 GB each), so this keeps them persistent
+  # and outside the container's writable layer.
+  ollama_data:
+    driver: local

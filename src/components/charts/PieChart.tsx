@@ -89,7 +89,7 @@ export function PieChart({
             outerRadius={outerRadius}
             paddingAngle={2}
             dataKey="value"
-            label={showLabels ? renderCustomLabel : undefined}
+            label={showLabels ? (renderCustomLabel as unknown as boolean) : undefined}
           >
             {data.map((entry, index) => (
               <Cell
