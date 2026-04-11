@@ -48,21 +48,14 @@ export function PieChart({
   showLabels = false,
   className,
 }: PieChartProps) {
-  const renderCustomLabel = ({
-    cx,
-    cy,
-    midAngle,
-    innerRadius: ir,
-    outerRadius: or,
-    percent,
-  }: {
-    cx: number;
-    cy: number;
-    midAngle: number;
-    innerRadius: number;
-    outerRadius: number;
-    percent: number;
-  }) => {
+  const renderCustomLabel = (props: Record<string, unknown>) => {
+    const cx = props.cx as number;
+    const cy = props.cy as number;
+    const midAngle = (props.midAngle as number) ?? 0;
+    const ir = (props.innerRadius as number) ?? 0;
+    const or = (props.outerRadius as number) ?? 0;
+    const percent = (props.percent as number) ?? 0;
+
     const RADIAN = Math.PI / 180;
     const radius = ir + (or - ir) * 1.4;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
