@@ -46,11 +46,11 @@ export function PieChartComponent({
           dataKey="value"
           label={
             showLabel
-              ? ({ name, percent }) =>
-                  `${name} ${(percent * 100).toFixed(0)}%`
-              : undefined
+              ? (props: Record<string, unknown>) =>
+                  `${props.name} ${((props.percent as number) * 100).toFixed(0)}%`
+              : false
           }
-          labelLine={showLabel}
+          labelLine={showLabel ? true : false}
         >
           {data.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={entry.color} />
