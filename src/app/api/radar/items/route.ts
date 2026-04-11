@@ -22,7 +22,7 @@ const createItemSchema = z.object({
     'drama', 'breakthrough', 'hiring', 'acquisition',
   ]),
   importance_score: z.number().min(0).max(100).default(50),
-  raw_data: z.record(z.unknown()).default({}),
+  raw_data: z.record(z.string(), z.unknown()).default({}),
 });
 
 // ---------------------------------------------------------------------------

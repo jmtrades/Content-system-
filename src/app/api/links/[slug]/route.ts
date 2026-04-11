@@ -100,23 +100,26 @@ export async function GET(
     if (tracking.utm_campaign) url.searchParams.set('utm_campaign', tracking.utm_campaign);
     url.searchParams.set('utm_content', slug);
 
-    // Log the click asynchronously
+    // Log the click asynchronously (fire-and-forget)
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-    db.from('link_clicks').insert({
-      smart_link_id: link.id,
-      slug,
-      detected_platform: detectedPlatform,
-      referrer: referrer ?? null,
-      user_agent: userAgent ?? null,
-      ip_address: ip,
-      destination_url: url.toString(),
-      clicked_at: new Date().toISOString(),
-    }).then(() => {
-      // Also increment click counter on the smart link
-      return db.rpc('increment_link_clicks', { link_id: link.id });
-    }).catch((err) => {
-      console.error(`[links] Failed to log click for ${slug}:`, err);
-    });
+    void (async () => {
+      try {
+        await db.from('link_clicks').insert({
+          smart_link_id: link.id,
+          slug,
+          detected_platform: detectedPlatform,
+          referrer: referrer ?? null,
+          user_agent: userAgent ?? null,
+          ip_address: ip,
+          destination_url: url.toString(),
+          clicked_at: new Date().toISOString(),
+        });
+        // Also increment click counter on the smart link
+        await db.rpc('increment_link_clicks', { link_id: link.id });
+      } catch (clickErr) {
+        console.error(`[links] Failed to log click for ${slug}:`, clickErr);
+      }
+    })();
 
     // Return redirect response
     return NextResponse.redirect(url.toString(), 302);
