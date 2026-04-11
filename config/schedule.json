@@ -1,0 +1,314 @@
+{
+  "timezone": "America/New_York",
+  "content_pillars": [
+    {
+      "name": "ai_news",
+      "description": "Breaking AI news, product launches, funding rounds, and industry shakeups",
+      "frequency": "daily",
+      "monetization": "audience_growth"
+    },
+    {
+      "name": "ai_tutorials",
+      "description": "Step-by-step AI tool walkthroughs and how-to guides",
+      "frequency": "3x_weekly",
+      "monetization": "affiliate_links"
+    },
+    {
+      "name": "ai_tools",
+      "description": "Tool reviews, comparisons, and hidden feature discoveries",
+      "frequency": "3x_weekly",
+      "monetization": "affiliate_links"
+    },
+    {
+      "name": "ai_opinions",
+      "description": "Hot takes, predictions, and thought leadership on AI trends",
+      "frequency": "2x_weekly",
+      "monetization": "authority_building"
+    },
+    {
+      "name": "ai_money",
+      "description": "How to make money with AI, side hustles, automation income",
+      "frequency": "2x_weekly",
+      "monetization": "digital_products"
+    },
+    {
+      "name": "ai_career",
+      "description": "AI career advice, skills to learn, job market insights",
+      "frequency": "weekly",
+      "monetization": "courses"
+    },
+    {
+      "name": "ai_drama",
+      "description": "AI industry drama, controversies, and behind-the-scenes",
+      "frequency": "as_needed",
+      "monetization": "engagement_boost"
+    }
+  ],
+  "schedules": [
+    {
+      "platform": "tiktok",
+      "timezone": "America/New_York",
+      "posts_per_day": 3,
+      "days": {
+        "monday": {
+          "slots": [
+            { "time": "07:00", "content_pillar": "ai_news", "priority": 1 },
+            { "time": "12:00", "content_pillar": "ai_tools", "priority": 2 },
+            { "time": "19:00", "content_pillar": "ai_tutorials", "priority": 1 }
+          ]
+        },
+        "tuesday": {
+          "slots": [
+            { "time": "07:00", "content_pillar": "ai_news", "priority": 1 },
+            { "time": "12:00", "content_pillar": "ai_money", "priority": 2 },
+            { "time": "19:00", "content_pillar": "ai_opinions", "priority": 1 }
+          ]
+        },
+        "wednesday": {
+          "slots": [
+            { "time": "07:00", "content_pillar": "ai_news", "priority": 1 },
+            { "time": "12:00", "content_pillar": "ai_tutorials", "priority": 2 },
+            { "time": "19:00", "content_pillar": "ai_tools", "priority": 1 }
+          ]
+        },
+        "thursday": {
+          "slots": [
+            { "time": "07:00", "content_pillar": "ai_news", "priority": 1 },
+            { "time": "12:00", "content_pillar": "ai_career", "priority": 2 },
+            { "time": "19:00", "content_pillar": "ai_money", "priority": 1 }
+          ]
+        },
+        "friday": {
+          "slots": [
+            { "time": "07:00", "content_pillar": "ai_news", "priority": 1 },
+            { "time": "12:00", "content_pillar": "ai_tools", "priority": 2 },
+            { "time": "19:00", "content_pillar": "ai_opinions", "priority": 1 }
+          ]
+        },
+        "saturday": {
+          "slots": [
+            { "time": "09:00", "content_pillar": "ai_tutorials", "priority": 1 },
+            { "time": "14:00", "content_pillar": "ai_money", "priority": 2 }
+          ]
+        },
+        "sunday": {
+          "slots": [
+            { "time": "10:00", "content_pillar": "ai_opinions", "priority": 1 },
+            { "time": "16:00", "content_pillar": "ai_tools", "priority": 2 }
+          ]
+        }
+      }
+    },
+    {
+      "platform": "reels",
+      "timezone": "America/New_York",
+      "posts_per_day": 2,
+      "days": {
+        "monday": {
+          "slots": [
+            { "time": "08:00", "content_pillar": "ai_news", "priority": 1 },
+            { "time": "17:00", "content_pillar": "ai_tutorials", "priority": 2 }
+          ]
+        },
+        "tuesday": {
+          "slots": [
+            { "time": "08:00", "content_pillar": "ai_tools", "priority": 1 },
+            { "time": "17:00", "content_pillar": "ai_money", "priority": 2 }
+          ]
+        },
+        "wednesday": {
+          "slots": [
+            { "time": "08:00", "content_pillar": "ai_news", "priority": 1 },
+            { "time": "17:00", "content_pillar": "ai_opinions", "priority": 2 }
+          ]
+        },
+        "thursday": {
+          "slots": [
+            { "time": "08:00", "content_pillar": "ai_tutorials", "priority": 1 },
+            { "time": "17:00", "content_pillar": "ai_tools", "priority": 2 }
+          ]
+        },
+        "friday": {
+          "slots": [
+            { "time": "08:00", "content_pillar": "ai_news", "priority": 1 },
+            { "time": "17:00", "content_pillar": "ai_money", "priority": 2 }
+          ]
+        },
+        "saturday": {
+          "slots": [
+            { "time": "10:00", "content_pillar": "ai_tools", "priority": 1 }
+          ]
+        },
+        "sunday": {
+          "slots": [
+            { "time": "11:00", "content_pillar": "ai_tutorials", "priority": 1 }
+          ]
+        }
+      }
+    },
+    {
+      "platform": "youtube_shorts",
+      "timezone": "America/New_York",
+      "posts_per_day": 2,
+      "days": {
+        "monday": {
+          "slots": [
+            { "time": "09:00", "content_pillar": "ai_tutorials", "priority": 1 },
+            { "time": "15:00", "content_pillar": "ai_news", "priority": 2 }
+          ]
+        },
+        "tuesday": {
+          "slots": [
+            { "time": "09:00", "content_pillar": "ai_tools", "priority": 1 },
+            { "time": "15:00", "content_pillar": "ai_opinions", "priority": 2 }
+          ]
+        },
+        "wednesday": {
+          "slots": [
+            { "time": "09:00", "content_pillar": "ai_news", "priority": 1 },
+            { "time": "15:00", "content_pillar": "ai_tutorials", "priority": 2 }
+          ]
+        },
+        "thursday": {
+          "slots": [
+            { "time": "09:00", "content_pillar": "ai_money", "priority": 1 },
+            { "time": "15:00", "content_pillar": "ai_tools", "priority": 2 }
+          ]
+        },
+        "friday": {
+          "slots": [
+            { "time": "09:00", "content_pillar": "ai_news", "priority": 1 },
+            { "time": "15:00", "content_pillar": "ai_career", "priority": 2 }
+          ]
+        },
+        "saturday": {
+          "slots": [
+            { "time": "10:00", "content_pillar": "ai_tutorials", "priority": 1 }
+          ]
+        },
+        "sunday": {
+          "slots": [
+            { "time": "12:00", "content_pillar": "ai_opinions", "priority": 1 }
+          ]
+        }
+      }
+    },
+    {
+      "platform": "linkedin",
+      "timezone": "America/New_York",
+      "posts_per_day": 1,
+      "days": {
+        "monday": {
+          "slots": [
+            { "time": "08:30", "content_pillar": "ai_career", "priority": 1 }
+          ]
+        },
+        "tuesday": {
+          "slots": [
+            { "time": "08:30", "content_pillar": "ai_opinions", "priority": 1 }
+          ]
+        },
+        "wednesday": {
+          "slots": [
+            { "time": "08:30", "content_pillar": "ai_news", "priority": 1 }
+          ]
+        },
+        "thursday": {
+          "slots": [
+            { "time": "08:30", "content_pillar": "ai_tools", "priority": 1 }
+          ]
+        },
+        "friday": {
+          "slots": [
+            { "time": "08:30", "content_pillar": "ai_money", "priority": 1 }
+          ]
+        },
+        "saturday": {
+          "slots": []
+        },
+        "sunday": {
+          "slots": []
+        }
+      }
+    },
+    {
+      "platform": "twitter",
+      "timezone": "America/New_York",
+      "posts_per_day": 4,
+      "days": {
+        "monday": {
+          "slots": [
+            { "time": "07:30", "content_pillar": "ai_news", "priority": 1 },
+            { "time": "10:00", "content_pillar": "ai_opinions", "priority": 2 },
+            { "time": "14:00", "content_pillar": "ai_tools", "priority": 3 },
+            { "time": "18:00", "content_pillar": "ai_tutorials", "priority": 2 }
+          ]
+        },
+        "tuesday": {
+          "slots": [
+            { "time": "07:30", "content_pillar": "ai_news", "priority": 1 },
+            { "time": "10:00", "content_pillar": "ai_money", "priority": 2 },
+            { "time": "14:00", "content_pillar": "ai_opinions", "priority": 3 },
+            { "time": "18:00", "content_pillar": "ai_tools", "priority": 2 }
+          ]
+        },
+        "wednesday": {
+          "slots": [
+            { "time": "07:30", "content_pillar": "ai_news", "priority": 1 },
+            { "time": "10:00", "content_pillar": "ai_tutorials", "priority": 2 },
+            { "time": "14:00", "content_pillar": "ai_career", "priority": 3 },
+            { "time": "18:00", "content_pillar": "ai_opinions", "priority": 2 }
+          ]
+        },
+        "thursday": {
+          "slots": [
+            { "time": "07:30", "content_pillar": "ai_news", "priority": 1 },
+            { "time": "10:00", "content_pillar": "ai_tools", "priority": 2 },
+            { "time": "14:00", "content_pillar": "ai_money", "priority": 3 },
+            { "time": "18:00", "content_pillar": "ai_tutorials", "priority": 2 }
+          ]
+        },
+        "friday": {
+          "slots": [
+            { "time": "07:30", "content_pillar": "ai_news", "priority": 1 },
+            { "time": "10:00", "content_pillar": "ai_opinions", "priority": 2 },
+            { "time": "14:00", "content_pillar": "ai_tools", "priority": 3 },
+            { "time": "18:00", "content_pillar": "ai_drama", "priority": 2 }
+          ]
+        },
+        "saturday": {
+          "slots": [
+            { "time": "09:00", "content_pillar": "ai_opinions", "priority": 1 },
+            { "time": "14:00", "content_pillar": "ai_tools", "priority": 2 }
+          ]
+        },
+        "sunday": {
+          "slots": [
+            { "time": "10:00", "content_pillar": "ai_news", "priority": 1 },
+            { "time": "15:00", "content_pillar": "ai_opinions", "priority": 2 }
+          ]
+        }
+      }
+    }
+  ],
+  "posting_rules": {
+    "min_gap_between_posts_minutes": 120,
+    "max_posts_per_day_per_platform": 5,
+    "blackout_hours": {
+      "start": "23:00",
+      "end": "06:00"
+    },
+    "breaking_news_override": true,
+    "breaking_news_max_delay_minutes": 30,
+    "repost_minimum_gap_days": 14,
+    "engagement_multipliers": {
+      "monday": 1.0,
+      "tuesday": 1.05,
+      "wednesday": 1.1,
+      "thursday": 1.08,
+      "friday": 0.95,
+      "saturday": 0.85,
+      "sunday": 0.80
+    }
+  }
+}

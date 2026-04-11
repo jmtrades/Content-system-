@@ -1,0 +1,303 @@
+{
+  "platforms": {
+    "tiktok": {
+      "platform": "tiktok",
+      "display_name": "TikTok",
+      "max_duration_seconds": 180,
+      "min_duration_seconds": 15,
+      "aspect_ratio": "9:16",
+      "resolution": {
+        "width": 1080,
+        "height": 1920
+      },
+      "max_file_size_mb": 287,
+      "supported_formats": ["mp4", "mov", "webm"],
+      "video_codec": "h264",
+      "audio_codec": "aac",
+      "max_caption_length": 4000,
+      "max_hashtags": 30,
+      "supports_music": true,
+      "supports_text_overlay": true,
+      "api_posting_supported": true,
+      "optimal_fps": 30,
+      "bitrate_mbps": 8,
+      "safe_zone": {
+        "top_px": 150,
+        "bottom_px": 400,
+        "left_px": 40,
+        "right_px": 40
+      },
+      "text_overlay_defaults": {
+        "font_size": 42,
+        "font_family": "Montserrat-Bold",
+        "stroke_width": 3,
+        "stroke_color": "#000000",
+        "text_color": "#FFFFFF",
+        "position_y_percent": 40,
+        "max_width_percent": 85,
+        "line_spacing": 1.3
+      },
+      "engagement_features": {
+        "duet": true,
+        "stitch": true,
+        "comments": true,
+        "shares": true,
+        "saves": true,
+        "pin_comment": true
+      }
+    },
+    "reels": {
+      "platform": "reels",
+      "display_name": "Instagram Reels",
+      "max_duration_seconds": 90,
+      "min_duration_seconds": 15,
+      "aspect_ratio": "9:16",
+      "resolution": {
+        "width": 1080,
+        "height": 1920
+      },
+      "max_file_size_mb": 250,
+      "supported_formats": ["mp4", "mov"],
+      "video_codec": "h264",
+      "audio_codec": "aac",
+      "max_caption_length": 2200,
+      "max_hashtags": 30,
+      "supports_music": true,
+      "supports_text_overlay": true,
+      "api_posting_supported": true,
+      "optimal_fps": 30,
+      "bitrate_mbps": 8,
+      "safe_zone": {
+        "top_px": 120,
+        "bottom_px": 350,
+        "left_px": 40,
+        "right_px": 40
+      },
+      "text_overlay_defaults": {
+        "font_size": 40,
+        "font_family": "Montserrat-Bold",
+        "stroke_width": 3,
+        "stroke_color": "#000000",
+        "text_color": "#FFFFFF",
+        "position_y_percent": 40,
+        "max_width_percent": 85,
+        "line_spacing": 1.3
+      },
+      "engagement_features": {
+        "duet": false,
+        "stitch": false,
+        "comments": true,
+        "shares": true,
+        "saves": true,
+        "pin_comment": true
+      }
+    },
+    "youtube_shorts": {
+      "platform": "youtube_shorts",
+      "display_name": "YouTube Shorts",
+      "max_duration_seconds": 60,
+      "min_duration_seconds": 15,
+      "aspect_ratio": "9:16",
+      "resolution": {
+        "width": 1080,
+        "height": 1920
+      },
+      "max_file_size_mb": 256,
+      "supported_formats": ["mp4", "mov", "webm", "avi"],
+      "video_codec": "h264",
+      "audio_codec": "aac",
+      "max_caption_length": 100,
+      "max_hashtags": 15,
+      "supports_music": true,
+      "supports_text_overlay": true,
+      "api_posting_supported": true,
+      "optimal_fps": 30,
+      "bitrate_mbps": 10,
+      "safe_zone": {
+        "top_px": 100,
+        "bottom_px": 300,
+        "left_px": 40,
+        "right_px": 40
+      },
+      "text_overlay_defaults": {
+        "font_size": 44,
+        "font_family": "Montserrat-Bold",
+        "stroke_width": 3,
+        "stroke_color": "#000000",
+        "text_color": "#FFFFFF",
+        "position_y_percent": 38,
+        "max_width_percent": 85,
+        "line_spacing": 1.3
+      },
+      "engagement_features": {
+        "duet": false,
+        "stitch": false,
+        "comments": true,
+        "shares": true,
+        "saves": false,
+        "pin_comment": true
+      }
+    },
+    "linkedin": {
+      "platform": "linkedin",
+      "display_name": "LinkedIn Video",
+      "max_duration_seconds": 600,
+      "min_duration_seconds": 3,
+      "aspect_ratio": "9:16",
+      "resolution": {
+        "width": 1080,
+        "height": 1920
+      },
+      "max_file_size_mb": 5120,
+      "supported_formats": ["mp4", "mov"],
+      "video_codec": "h264",
+      "audio_codec": "aac",
+      "max_caption_length": 3000,
+      "max_hashtags": 5,
+      "supports_music": false,
+      "supports_text_overlay": true,
+      "api_posting_supported": true,
+      "optimal_fps": 30,
+      "bitrate_mbps": 8,
+      "safe_zone": {
+        "top_px": 80,
+        "bottom_px": 200,
+        "left_px": 40,
+        "right_px": 40
+      },
+      "text_overlay_defaults": {
+        "font_size": 38,
+        "font_family": "Montserrat-Bold",
+        "stroke_width": 2,
+        "stroke_color": "#000000",
+        "text_color": "#FFFFFF",
+        "position_y_percent": 42,
+        "max_width_percent": 90,
+        "line_spacing": 1.4
+      },
+      "engagement_features": {
+        "duet": false,
+        "stitch": false,
+        "comments": true,
+        "shares": true,
+        "saves": true,
+        "pin_comment": false
+      }
+    },
+    "twitter": {
+      "platform": "twitter",
+      "display_name": "X / Twitter Video",
+      "max_duration_seconds": 140,
+      "min_duration_seconds": 1,
+      "aspect_ratio": "9:16",
+      "resolution": {
+        "width": 1080,
+        "height": 1920
+      },
+      "max_file_size_mb": 512,
+      "supported_formats": ["mp4", "mov"],
+      "video_codec": "h264",
+      "audio_codec": "aac",
+      "max_caption_length": 280,
+      "max_hashtags": 5,
+      "supports_music": false,
+      "supports_text_overlay": true,
+      "api_posting_supported": true,
+      "optimal_fps": 30,
+      "bitrate_mbps": 8,
+      "safe_zone": {
+        "top_px": 60,
+        "bottom_px": 150,
+        "left_px": 30,
+        "right_px": 30
+      },
+      "text_overlay_defaults": {
+        "font_size": 36,
+        "font_family": "Montserrat-Bold",
+        "stroke_width": 2,
+        "stroke_color": "#000000",
+        "text_color": "#FFFFFF",
+        "position_y_percent": 42,
+        "max_width_percent": 90,
+        "line_spacing": 1.3
+      },
+      "engagement_features": {
+        "duet": false,
+        "stitch": false,
+        "comments": true,
+        "shares": true,
+        "saves": true,
+        "pin_comment": false
+      }
+    }
+  },
+  "ffmpeg_presets": {
+    "short_form_default": {
+      "video_codec": "libx264",
+      "audio_codec": "aac",
+      "pixel_format": "yuv420p",
+      "preset": "medium",
+      "crf": 18,
+      "audio_bitrate": "192k",
+      "audio_sample_rate": 44100,
+      "movflags": "+faststart"
+    },
+    "high_quality": {
+      "video_codec": "libx264",
+      "audio_codec": "aac",
+      "pixel_format": "yuv420p",
+      "preset": "slow",
+      "crf": 15,
+      "audio_bitrate": "256k",
+      "audio_sample_rate": 48000,
+      "movflags": "+faststart"
+    },
+    "fast_render": {
+      "video_codec": "libx264",
+      "audio_codec": "aac",
+      "pixel_format": "yuv420p",
+      "preset": "veryfast",
+      "crf": 22,
+      "audio_bitrate": "128k",
+      "audio_sample_rate": 44100,
+      "movflags": "+faststart"
+    }
+  },
+  "color_grades": {
+    "default": {
+      "brightness": 0,
+      "contrast": 1.05,
+      "saturation": 1.1,
+      "gamma": 1.0,
+      "temperature": 0
+    },
+    "warm": {
+      "brightness": 0.02,
+      "contrast": 1.08,
+      "saturation": 1.15,
+      "gamma": 0.98,
+      "temperature": 15
+    },
+    "cool": {
+      "brightness": 0,
+      "contrast": 1.1,
+      "saturation": 0.95,
+      "gamma": 1.0,
+      "temperature": -10
+    },
+    "high_contrast": {
+      "brightness": 0,
+      "contrast": 1.25,
+      "saturation": 1.2,
+      "gamma": 0.95,
+      "temperature": 0
+    },
+    "moody": {
+      "brightness": -0.03,
+      "contrast": 1.15,
+      "saturation": 0.85,
+      "gamma": 0.92,
+      "temperature": -5
+    }
+  }
+}

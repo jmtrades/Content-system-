@@ -1,0 +1,544 @@
+{
+  "sources": [
+    {
+      "id": "openai-blog",
+      "name": "OpenAI Blog",
+      "type": "rss",
+      "url": "https://openai.com/blog/rss.xml",
+      "category": "company_blog",
+      "check_interval_minutes": 30,
+      "enabled": true,
+      "priority": 10
+    },
+    {
+      "id": "anthropic-blog",
+      "name": "Anthropic Blog",
+      "type": "rss",
+      "url": "https://www.anthropic.com/feed",
+      "category": "company_blog",
+      "check_interval_minutes": 30,
+      "enabled": true,
+      "priority": 10
+    },
+    {
+      "id": "google-ai-blog",
+      "name": "Google AI Blog",
+      "type": "rss",
+      "url": "https://blog.google/technology/ai/rss/",
+      "category": "company_blog",
+      "check_interval_minutes": 30,
+      "enabled": true,
+      "priority": 9
+    },
+    {
+      "id": "meta-ai-blog",
+      "name": "Meta AI Blog",
+      "type": "rss",
+      "url": "https://ai.meta.com/blog/rss/",
+      "category": "company_blog",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 9
+    },
+    {
+      "id": "huggingface-blog",
+      "name": "Hugging Face Blog",
+      "type": "rss",
+      "url": "https://huggingface.co/blog/feed.xml",
+      "category": "company_blog",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 8
+    },
+    {
+      "id": "microsoft-ai-blog",
+      "name": "Microsoft AI Blog",
+      "type": "rss",
+      "url": "https://blogs.microsoft.com/ai/feed/",
+      "category": "company_blog",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 8
+    },
+    {
+      "id": "nvidia-ai-blog",
+      "name": "NVIDIA AI Blog",
+      "type": "rss",
+      "url": "https://blogs.nvidia.com/blog/category/deep-learning/feed/",
+      "category": "company_blog",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 7
+    },
+    {
+      "id": "stability-ai-blog",
+      "name": "Stability AI Blog",
+      "type": "rss",
+      "url": "https://stability.ai/blog/feed",
+      "category": "company_blog",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 7
+    },
+    {
+      "id": "mistral-blog",
+      "name": "Mistral AI Blog",
+      "type": "rss",
+      "url": "https://mistral.ai/feed.xml",
+      "category": "company_blog",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 8
+    },
+    {
+      "id": "cohere-blog",
+      "name": "Cohere Blog",
+      "type": "rss",
+      "url": "https://txt.cohere.com/rss/",
+      "category": "company_blog",
+      "check_interval_minutes": 120,
+      "enabled": true,
+      "priority": 6
+    },
+    {
+      "id": "deepmind-blog",
+      "name": "Google DeepMind Blog",
+      "type": "rss",
+      "url": "https://deepmind.google/blog/rss.xml",
+      "category": "company_blog",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 9
+    },
+    {
+      "id": "replicate-blog",
+      "name": "Replicate Blog",
+      "type": "rss",
+      "url": "https://replicate.com/blog/rss.xml",
+      "category": "company_blog",
+      "check_interval_minutes": 120,
+      "enabled": true,
+      "priority": 6
+    },
+    {
+      "id": "the-batch",
+      "name": "The Batch by Andrew Ng",
+      "type": "newsletter",
+      "url": "https://www.deeplearning.ai/the-batch/feed/",
+      "category": "newsletter",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 9
+    },
+    {
+      "id": "import-ai",
+      "name": "Import AI by Jack Clark",
+      "type": "newsletter",
+      "url": "https://importai.substack.com/feed",
+      "category": "newsletter",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 8
+    },
+    {
+      "id": "tldr-ai",
+      "name": "TLDR AI",
+      "type": "newsletter",
+      "url": "https://tldr.tech/ai/rss",
+      "category": "newsletter",
+      "check_interval_minutes": 30,
+      "enabled": true,
+      "priority": 9
+    },
+    {
+      "id": "ben-bens-bites",
+      "name": "Ben's Bites",
+      "type": "newsletter",
+      "url": "https://bensbites.beehiiv.com/feed",
+      "category": "newsletter",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 8
+    },
+    {
+      "id": "the-neuron",
+      "name": "The Neuron",
+      "type": "newsletter",
+      "url": "https://www.theneurondaily.com/feed",
+      "category": "newsletter",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 7
+    },
+    {
+      "id": "superhuman-ai",
+      "name": "Superhuman AI",
+      "type": "newsletter",
+      "url": "https://www.superhuman.ai/feed",
+      "category": "newsletter",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 7
+    },
+    {
+      "id": "ai-breakfast",
+      "name": "AI Breakfast",
+      "type": "newsletter",
+      "url": "https://aibreakfast.beehiiv.com/feed",
+      "category": "newsletter",
+      "check_interval_minutes": 120,
+      "enabled": true,
+      "priority": 6
+    },
+    {
+      "id": "alphasignal",
+      "name": "AlphaSignal",
+      "type": "newsletter",
+      "url": "https://alphasignal.ai/feed",
+      "category": "newsletter",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 7
+    },
+    {
+      "id": "techcrunch-ai",
+      "name": "TechCrunch AI",
+      "type": "rss",
+      "url": "https://techcrunch.com/category/artificial-intelligence/feed/",
+      "category": "tech_blog",
+      "check_interval_minutes": 30,
+      "enabled": true,
+      "priority": 9
+    },
+    {
+      "id": "the-verge-ai",
+      "name": "The Verge AI",
+      "type": "rss",
+      "url": "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml",
+      "category": "tech_blog",
+      "check_interval_minutes": 30,
+      "enabled": true,
+      "priority": 8
+    },
+    {
+      "id": "wired-ai",
+      "name": "Wired AI",
+      "type": "rss",
+      "url": "https://www.wired.com/feed/tag/ai/latest/rss",
+      "category": "tech_blog",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 7
+    },
+    {
+      "id": "mit-tech-review-ai",
+      "name": "MIT Technology Review AI",
+      "type": "rss",
+      "url": "https://www.technologyreview.com/topic/artificial-intelligence/feed",
+      "category": "tech_blog",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 8
+    },
+    {
+      "id": "ars-technica-ai",
+      "name": "Ars Technica AI",
+      "type": "rss",
+      "url": "https://feeds.arstechnica.com/arstechnica/technology-lab",
+      "category": "tech_blog",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 7
+    },
+    {
+      "id": "venturebeat-ai",
+      "name": "VentureBeat AI",
+      "type": "rss",
+      "url": "https://venturebeat.com/category/ai/feed/",
+      "category": "tech_blog",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 7
+    },
+    {
+      "id": "the-information",
+      "name": "The Information",
+      "type": "rss",
+      "url": "https://www.theinformation.com/feed",
+      "category": "tech_blog",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 7
+    },
+    {
+      "id": "semafor-tech",
+      "name": "Semafor Tech",
+      "type": "rss",
+      "url": "https://www.semafor.com/feed/tech",
+      "category": "tech_blog",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 6
+    },
+    {
+      "id": "reddit-machinelearning",
+      "name": "Reddit r/MachineLearning",
+      "type": "reddit",
+      "url": "https://www.reddit.com/r/MachineLearning/hot.json?limit=25",
+      "category": "reddit",
+      "check_interval_minutes": 30,
+      "enabled": true,
+      "priority": 9
+    },
+    {
+      "id": "reddit-artificial",
+      "name": "Reddit r/artificial",
+      "type": "reddit",
+      "url": "https://www.reddit.com/r/artificial/hot.json?limit=25",
+      "category": "reddit",
+      "check_interval_minutes": 30,
+      "enabled": true,
+      "priority": 7
+    },
+    {
+      "id": "reddit-openai",
+      "name": "Reddit r/OpenAI",
+      "type": "reddit",
+      "url": "https://www.reddit.com/r/OpenAI/hot.json?limit=25",
+      "category": "reddit",
+      "check_interval_minutes": 30,
+      "enabled": true,
+      "priority": 8
+    },
+    {
+      "id": "reddit-chatgpt",
+      "name": "Reddit r/ChatGPT",
+      "type": "reddit",
+      "url": "https://www.reddit.com/r/ChatGPT/hot.json?limit=25",
+      "category": "reddit",
+      "check_interval_minutes": 30,
+      "enabled": true,
+      "priority": 8
+    },
+    {
+      "id": "reddit-localllama",
+      "name": "Reddit r/LocalLLaMA",
+      "type": "reddit",
+      "url": "https://www.reddit.com/r/LocalLLaMA/hot.json?limit=25",
+      "category": "reddit",
+      "check_interval_minutes": 30,
+      "enabled": true,
+      "priority": 8
+    },
+    {
+      "id": "reddit-stablediffusion",
+      "name": "Reddit r/StableDiffusion",
+      "type": "reddit",
+      "url": "https://www.reddit.com/r/StableDiffusion/hot.json?limit=25",
+      "category": "reddit",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 6
+    },
+    {
+      "id": "reddit-singularity",
+      "name": "Reddit r/singularity",
+      "type": "reddit",
+      "url": "https://www.reddit.com/r/singularity/hot.json?limit=25",
+      "category": "reddit",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 6
+    },
+    {
+      "id": "reddit-claudeai",
+      "name": "Reddit r/ClaudeAI",
+      "type": "reddit",
+      "url": "https://www.reddit.com/r/ClaudeAI/hot.json?limit=25",
+      "category": "reddit",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 7
+    },
+    {
+      "id": "arxiv-cs-ai",
+      "name": "arXiv cs.AI",
+      "type": "arxiv",
+      "url": "https://rss.arxiv.org/rss/cs.AI",
+      "category": "research",
+      "check_interval_minutes": 120,
+      "enabled": true,
+      "priority": 7
+    },
+    {
+      "id": "arxiv-cs-cl",
+      "name": "arXiv cs.CL (Computation and Language)",
+      "type": "arxiv",
+      "url": "https://rss.arxiv.org/rss/cs.CL",
+      "category": "research",
+      "check_interval_minutes": 120,
+      "enabled": true,
+      "priority": 8
+    },
+    {
+      "id": "arxiv-cs-lg",
+      "name": "arXiv cs.LG (Machine Learning)",
+      "type": "arxiv",
+      "url": "https://rss.arxiv.org/rss/cs.LG",
+      "category": "research",
+      "check_interval_minutes": 120,
+      "enabled": true,
+      "priority": 7
+    },
+    {
+      "id": "arxiv-cs-cv",
+      "name": "arXiv cs.CV (Computer Vision)",
+      "type": "arxiv",
+      "url": "https://rss.arxiv.org/rss/cs.CV",
+      "category": "research",
+      "check_interval_minutes": 120,
+      "enabled": true,
+      "priority": 6
+    },
+    {
+      "id": "hackernews-top",
+      "name": "Hacker News Top Stories",
+      "type": "hackernews",
+      "url": "https://hacker-news.firebaseio.com/v0/topstories.json",
+      "category": "hackernews",
+      "check_interval_minutes": 15,
+      "enabled": true,
+      "priority": 9
+    },
+    {
+      "id": "hackernews-best",
+      "name": "Hacker News Best Stories",
+      "type": "hackernews",
+      "url": "https://hacker-news.firebaseio.com/v0/beststories.json",
+      "category": "hackernews",
+      "check_interval_minutes": 30,
+      "enabled": true,
+      "priority": 8
+    },
+    {
+      "id": "hackernews-new",
+      "name": "Hacker News New Stories",
+      "type": "hackernews",
+      "url": "https://hacker-news.firebaseio.com/v0/newstories.json",
+      "category": "hackernews",
+      "check_interval_minutes": 15,
+      "enabled": true,
+      "priority": 7
+    },
+    {
+      "id": "hackernews-item-api",
+      "name": "Hacker News Item API",
+      "type": "hackernews",
+      "url": "https://hacker-news.firebaseio.com/v0/item/{id}.json",
+      "category": "hackernews",
+      "check_interval_minutes": 0,
+      "enabled": true,
+      "priority": 0
+    },
+    {
+      "id": "product-hunt",
+      "name": "Product Hunt AI Topics",
+      "type": "rss",
+      "url": "https://www.producthunt.com/feed?category=artificial-intelligence",
+      "category": "product_launch",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 7
+    },
+    {
+      "id": "github-trending",
+      "name": "GitHub Trending (Machine Learning)",
+      "type": "blog",
+      "url": "https://github.com/trending?since=daily&spoken_language_code=en",
+      "category": "open_source",
+      "check_interval_minutes": 120,
+      "enabled": true,
+      "priority": 7
+    },
+    {
+      "id": "papers-with-code",
+      "name": "Papers With Code Trending",
+      "type": "rss",
+      "url": "https://paperswithcode.com/latest",
+      "category": "research",
+      "check_interval_minutes": 120,
+      "enabled": true,
+      "priority": 7
+    },
+    {
+      "id": "towards-data-science",
+      "name": "Towards Data Science",
+      "type": "rss",
+      "url": "https://towardsdatascience.com/feed",
+      "category": "tech_blog",
+      "check_interval_minutes": 120,
+      "enabled": true,
+      "priority": 5
+    },
+    {
+      "id": "openai-status",
+      "name": "OpenAI API Status",
+      "type": "rss",
+      "url": "https://status.openai.com/history.rss",
+      "category": "company_blog",
+      "check_interval_minutes": 15,
+      "enabled": true,
+      "priority": 6
+    },
+    {
+      "id": "ai-news-substack",
+      "name": "AI News (Substack)",
+      "type": "newsletter",
+      "url": "https://buttondown.email/ainews/rss",
+      "category": "newsletter",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 8
+    },
+    {
+      "id": "last-week-in-ai",
+      "name": "Last Week in AI",
+      "type": "newsletter",
+      "url": "https://lastweekin.ai/feed",
+      "category": "newsletter",
+      "check_interval_minutes": 120,
+      "enabled": true,
+      "priority": 7
+    },
+    {
+      "id": "interconnects",
+      "name": "Interconnects by Nathan Lambert",
+      "type": "newsletter",
+      "url": "https://www.interconnects.ai/feed",
+      "category": "newsletter",
+      "check_interval_minutes": 120,
+      "enabled": true,
+      "priority": 7
+    },
+    {
+      "id": "simon-willison",
+      "name": "Simon Willison's Weblog",
+      "type": "blog",
+      "url": "https://simonwillison.net/atom/everything/",
+      "category": "tech_blog",
+      "check_interval_minutes": 60,
+      "enabled": true,
+      "priority": 8
+    },
+    {
+      "id": "latent-space",
+      "name": "Latent Space Podcast",
+      "type": "podcast",
+      "url": "https://www.latent.space/feed",
+      "category": "newsletter",
+      "check_interval_minutes": 120,
+      "enabled": true,
+      "priority": 7
+    }
+  ]
+}

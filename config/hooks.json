@@ -1,0 +1,301 @@
+{
+  "hooks": [
+    {
+      "id": "contrarian-opener",
+      "name": "The Contrarian",
+      "template": "Stop using {tool}. Here's what {experts} use instead.",
+      "category": "contrarian",
+      "effectiveness_score": 9.2,
+      "example": "Stop using ChatGPT. Here's what AI researchers use instead.",
+      "best_for": ["ai_tools", "ai_opinions"]
+    },
+    {
+      "id": "secret-reveal",
+      "name": "The Secret",
+      "template": "{company} doesn't want you to know about this {feature}.",
+      "category": "curiosity",
+      "effectiveness_score": 8.8,
+      "example": "OpenAI doesn't want you to know about this hidden feature.",
+      "best_for": ["ai_tools", "ai_news"]
+    },
+    {
+      "id": "just-discovered",
+      "name": "Just Discovered",
+      "template": "I just discovered a {adjective} AI {thing} that can {benefit}.",
+      "category": "discovery",
+      "effectiveness_score": 8.5,
+      "example": "I just discovered a free AI tool that can clone your voice in 10 seconds.",
+      "best_for": ["ai_tools", "ai_tutorials"]
+    },
+    {
+      "id": "this-ai-will",
+      "name": "This AI Will",
+      "template": "This AI will {dramatic_outcome} in {timeframe}.",
+      "category": "prediction",
+      "effectiveness_score": 8.7,
+      "example": "This AI will replace 90% of graphic designers in 2 years.",
+      "best_for": ["ai_opinions", "ai_news"]
+    },
+    {
+      "id": "breaking-news",
+      "name": "Breaking News",
+      "template": "BREAKING: {company} just {action} and it changes everything.",
+      "category": "urgency",
+      "effectiveness_score": 9.0,
+      "example": "BREAKING: Google just released Gemini 2.0 and it changes everything.",
+      "best_for": ["ai_news", "ai_tools"]
+    },
+    {
+      "id": "free-alternative",
+      "name": "Free Alternative",
+      "template": "Why pay for {paid_tool} when this free AI does it better?",
+      "category": "value",
+      "effectiveness_score": 9.1,
+      "example": "Why pay for Midjourney when this free AI does it better?",
+      "best_for": ["ai_tools", "ai_money"]
+    },
+    {
+      "id": "x-people-know",
+      "name": "Few People Know",
+      "template": "Only {percentage} of people know about this AI {thing}.",
+      "category": "exclusivity",
+      "effectiveness_score": 8.4,
+      "example": "Only 2% of people know about this AI trick in ChatGPT.",
+      "best_for": ["ai_tutorials", "ai_tools"]
+    },
+    {
+      "id": "money-hook",
+      "name": "The Money Hook",
+      "template": "I made ${amount} in {timeframe} using nothing but AI. Here's how.",
+      "category": "money",
+      "effectiveness_score": 9.3,
+      "example": "I made $5,000 in one week using nothing but AI. Here's how.",
+      "best_for": ["ai_money", "ai_tools"]
+    },
+    {
+      "id": "mistake-hook",
+      "name": "The Big Mistake",
+      "template": "The biggest mistake you're making with {tool} right now.",
+      "category": "pain_point",
+      "effectiveness_score": 8.6,
+      "example": "The biggest mistake you're making with ChatGPT right now.",
+      "best_for": ["ai_tutorials", "ai_opinions"]
+    },
+    {
+      "id": "before-after",
+      "name": "Before/After",
+      "template": "What used to take {old_time} now takes {new_time} with AI.",
+      "category": "transformation",
+      "effectiveness_score": 8.9,
+      "example": "What used to take 3 hours now takes 30 seconds with AI.",
+      "best_for": ["ai_tutorials", "ai_tools"]
+    },
+    {
+      "id": "list-hook",
+      "name": "The Numbered List",
+      "template": "{number} AI tools that will {benefit} (#{number} is insane).",
+      "category": "list",
+      "effectiveness_score": 8.3,
+      "example": "7 AI tools that will 10x your productivity (#5 is insane).",
+      "best_for": ["ai_tools", "ai_tutorials"]
+    },
+    {
+      "id": "fired-hook",
+      "name": "The Career Threat",
+      "template": "If you're a {job_title}, this AI should terrify you.",
+      "category": "fear",
+      "effectiveness_score": 8.7,
+      "example": "If you're a copywriter, this AI should terrify you.",
+      "best_for": ["ai_career", "ai_opinions"]
+    },
+    {
+      "id": "boss-doesnt-know",
+      "name": "Boss Doesn't Know",
+      "template": "I automated my entire {job_task} with AI. My boss has no idea.",
+      "category": "relatable",
+      "effectiveness_score": 8.8,
+      "example": "I automated my entire email workflow with AI. My boss has no idea.",
+      "best_for": ["ai_tutorials", "ai_money"]
+    },
+    {
+      "id": "timeline-urgency",
+      "name": "Timeline Urgency",
+      "template": "In {timeframe}, {prediction}. Here's how to prepare.",
+      "category": "urgency",
+      "effectiveness_score": 8.5,
+      "example": "In 6 months, AI will make this skill obsolete. Here's how to prepare.",
+      "best_for": ["ai_career", "ai_opinions"]
+    },
+    {
+      "id": "tutorial-simple",
+      "name": "Simple Tutorial",
+      "template": "How to {benefit} using AI in {timeframe} (step by step).",
+      "category": "tutorial",
+      "effectiveness_score": 8.2,
+      "example": "How to build a website using AI in 5 minutes (step by step).",
+      "best_for": ["ai_tutorials", "ai_tools"]
+    },
+    {
+      "id": "comparison-hook",
+      "name": "The Showdown",
+      "template": "I tested {tool_a} vs {tool_b}. The winner surprised me.",
+      "category": "comparison",
+      "effectiveness_score": 8.6,
+      "example": "I tested GPT-4 vs Claude 3. The winner surprised me.",
+      "best_for": ["ai_tools", "ai_opinions"]
+    },
+    {
+      "id": "one-prompt",
+      "name": "One Prompt Wonder",
+      "template": "This single prompt replaced my {amount} {tool/person}.",
+      "category": "efficiency",
+      "effectiveness_score": 8.9,
+      "example": "This single prompt replaced my $5,000/month copywriter.",
+      "best_for": ["ai_tutorials", "ai_money"]
+    },
+    {
+      "id": "warning-hook",
+      "name": "The Warning",
+      "template": "WARNING: {thing} is about to {consequence}. Here's proof.",
+      "category": "urgency",
+      "effectiveness_score": 8.4,
+      "example": "WARNING: AI job displacement is about to accelerate. Here's proof.",
+      "best_for": ["ai_career", "ai_news"]
+    },
+    {
+      "id": "insider-info",
+      "name": "Insider Info",
+      "template": "I spoke to someone inside {company}. What they told me is wild.",
+      "category": "exclusivity",
+      "effectiveness_score": 8.7,
+      "example": "I spoke to someone inside OpenAI. What they told me is wild.",
+      "best_for": ["ai_news", "ai_drama"]
+    },
+    {
+      "id": "underrated-hook",
+      "name": "The Underrated",
+      "template": "The most underrated AI {thing} that nobody talks about.",
+      "category": "discovery",
+      "effectiveness_score": 8.3,
+      "example": "The most underrated AI tool that nobody talks about.",
+      "best_for": ["ai_tools", "ai_tutorials"]
+    },
+    {
+      "id": "age-hook",
+      "name": "Age Relative",
+      "template": "If you're over {age} and not using AI for {task}, you're falling behind.",
+      "category": "pain_point",
+      "effectiveness_score": 8.1,
+      "example": "If you're over 30 and not using AI for your job, you're falling behind.",
+      "best_for": ["ai_career", "ai_tutorials"]
+    },
+    {
+      "id": "pov-hook",
+      "name": "POV Hook",
+      "template": "POV: You discover an AI that {amazing_capability}.",
+      "category": "storytelling",
+      "effectiveness_score": 8.5,
+      "example": "POV: You discover an AI that writes code better than senior developers.",
+      "best_for": ["ai_tools", "ai_drama"]
+    },
+    {
+      "id": "update-hook",
+      "name": "Massive Update",
+      "template": "{tool} just dropped a MASSIVE update. Here's what's new.",
+      "category": "news",
+      "effectiveness_score": 8.8,
+      "example": "ChatGPT just dropped a MASSIVE update. Here's what's new.",
+      "best_for": ["ai_news", "ai_tools"]
+    },
+    {
+      "id": "overnight-hook",
+      "name": "Overnight Success",
+      "template": "This AI went from unknown to {metric} overnight. Here's why.",
+      "category": "storytelling",
+      "effectiveness_score": 8.2,
+      "example": "This AI went from unknown to 10 million users overnight. Here's why.",
+      "best_for": ["ai_news", "ai_opinions"]
+    },
+    {
+      "id": "delete-hook",
+      "name": "Delete This",
+      "template": "Delete {current_tool} and use this instead. Thank me later.",
+      "category": "contrarian",
+      "effectiveness_score": 8.9,
+      "example": "Delete ChatGPT and use this instead. Thank me later.",
+      "best_for": ["ai_tools", "ai_opinions"]
+    },
+    {
+      "id": "unpopular-opinion",
+      "name": "Unpopular Opinion",
+      "template": "Unpopular opinion: {hot_take_about_ai}.",
+      "category": "contrarian",
+      "effectiveness_score": 8.3,
+      "example": "Unpopular opinion: AI prompt engineering is not a real skill.",
+      "best_for": ["ai_opinions", "ai_drama"]
+    },
+    {
+      "id": "elon-said",
+      "name": "Authority Quote",
+      "template": "{authority_figure} just said {quote} about AI. They're {right/wrong}.",
+      "category": "authority",
+      "effectiveness_score": 8.4,
+      "example": "Elon Musk just said AI will surpass humans by 2026. He's actually right.",
+      "best_for": ["ai_news", "ai_opinions"]
+    },
+    {
+      "id": "first-to-know",
+      "name": "First To Know",
+      "template": "You're about to be one of the first people to see this AI {thing}.",
+      "category": "exclusivity",
+      "effectiveness_score": 8.6,
+      "example": "You're about to be one of the first people to see this AI breakthrough.",
+      "best_for": ["ai_news", "ai_tools"]
+    },
+    {
+      "id": "zero-to-hero",
+      "name": "Zero to Hero",
+      "template": "I went from {starting_point} to {achievement} using only AI in {time}.",
+      "category": "transformation",
+      "effectiveness_score": 9.0,
+      "example": "I went from zero coding knowledge to launching a SaaS using only AI in 48 hours.",
+      "best_for": ["ai_tutorials", "ai_money"]
+    },
+    {
+      "id": "what-if",
+      "name": "What If",
+      "template": "What if I told you AI can {unbelievable_capability} right now?",
+      "category": "curiosity",
+      "effectiveness_score": 8.1,
+      "example": "What if I told you AI can generate a full movie from a single sentence right now?",
+      "best_for": ["ai_tools", "ai_opinions"]
+    },
+    {
+      "id": "leaked-hook",
+      "name": "The Leak",
+      "template": "{company}'s next AI just leaked and it's {adjective}.",
+      "category": "exclusivity",
+      "effectiveness_score": 8.7,
+      "example": "Google's next AI just leaked and it's absolutely terrifying.",
+      "best_for": ["ai_news", "ai_drama"]
+    },
+    {
+      "id": "regret-hook",
+      "name": "Future Regret",
+      "template": "In {timeframe}, you'll regret not learning {thing} today.",
+      "category": "urgency",
+      "effectiveness_score": 8.3,
+      "example": "In 12 months, you'll regret not learning AI automation today.",
+      "best_for": ["ai_career", "ai_tutorials"]
+    },
+    {
+      "id": "real-reason",
+      "name": "The Real Reason",
+      "template": "The real reason {entity} {action} has nothing to do with {obvious_reason}.",
+      "category": "curiosity",
+      "effectiveness_score": 8.5,
+      "example": "The real reason Sam Altman fired those researchers has nothing to do with safety.",
+      "best_for": ["ai_drama", "ai_opinions"]
+    }
+  ]
+}

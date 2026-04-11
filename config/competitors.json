@@ -1,0 +1,202 @@
+{
+  "competitors": [
+    {
+      "handle": "maboroshii.ai",
+      "name": "Maboroshii",
+      "platforms": ["tiktok", "reels", "youtube_shorts"],
+      "tier": "macro",
+      "niche": "ai_tools_reviews",
+      "estimated_followers": 500000,
+      "notes": "Strong hook game, frequent tool reviews"
+    },
+    {
+      "handle": "aikitwithnahid",
+      "name": "AI Kit with Nahid",
+      "platforms": ["tiktok", "reels"],
+      "tier": "macro",
+      "niche": "ai_tutorials",
+      "estimated_followers": 400000,
+      "notes": "Clean tutorial style, product-focused"
+    },
+    {
+      "handle": "theaiguy",
+      "name": "The AI Guy (Matt Wolfe)",
+      "platforms": ["youtube_shorts", "twitter", "tiktok"],
+      "tier": "mega",
+      "niche": "ai_news_tools",
+      "estimated_followers": 800000,
+      "notes": "YouTube-first, strong newsletter funnel"
+    },
+    {
+      "handle": "riley.brown",
+      "name": "Riley Brown",
+      "platforms": ["tiktok", "reels", "youtube_shorts"],
+      "tier": "macro",
+      "niche": "ai_business",
+      "estimated_followers": 600000,
+      "notes": "Business/money angle, strong monetization"
+    },
+    {
+      "handle": "ai.austin",
+      "name": "AI Austin",
+      "platforms": ["tiktok", "reels"],
+      "tier": "mid",
+      "niche": "ai_tutorials",
+      "estimated_followers": 200000,
+      "notes": "Tutorial walkthroughs, beginner-friendly"
+    },
+    {
+      "handle": "wholemarketer",
+      "name": "Whole Mars Catalog",
+      "platforms": ["twitter"],
+      "tier": "macro",
+      "niche": "ai_opinions",
+      "estimated_followers": 500000,
+      "notes": "Hot takes, controversy-driven engagement"
+    },
+    {
+      "handle": "svpino",
+      "name": "Santiago Valdarrama",
+      "platforms": ["twitter", "linkedin"],
+      "tier": "macro",
+      "niche": "ai_career",
+      "estimated_followers": 450000,
+      "notes": "ML engineer perspective, career content"
+    },
+    {
+      "handle": "emaboroshii",
+      "name": "Ema Boroshii",
+      "platforms": ["tiktok", "reels"],
+      "tier": "mid",
+      "niche": "ai_tools",
+      "estimated_followers": 150000,
+      "notes": "Quick tool demos, aesthetic editing"
+    },
+    {
+      "handle": "linus.ekenstam",
+      "name": "Linus Ekenstam",
+      "platforms": ["twitter", "linkedin", "tiktok"],
+      "tier": "macro",
+      "niche": "ai_creative",
+      "estimated_followers": 350000,
+      "notes": "AI art and creative tools, design focus"
+    },
+    {
+      "handle": "rachellickssw",
+      "name": "Rachel Woods",
+      "platforms": ["twitter", "linkedin"],
+      "tier": "mid",
+      "niche": "ai_business",
+      "estimated_followers": 180000,
+      "notes": "AI for business leaders, consulting funnel"
+    },
+    {
+      "handle": "rowancheung",
+      "name": "Rowan Cheung",
+      "platforms": ["twitter", "linkedin", "tiktok"],
+      "tier": "mega",
+      "niche": "ai_news",
+      "estimated_followers": 1000000,
+      "notes": "The Rundown AI newsletter, cross-platform"
+    },
+    {
+      "handle": "aisolopreneur",
+      "name": "AI Solopreneur",
+      "platforms": ["twitter", "linkedin"],
+      "tier": "mid",
+      "niche": "ai_money",
+      "estimated_followers": 200000,
+      "notes": "Monetization-focused, course seller"
+    },
+    {
+      "handle": "meaboroshii",
+      "name": "Zain Kahn",
+      "platforms": ["twitter", "linkedin"],
+      "tier": "macro",
+      "niche": "ai_productivity",
+      "estimated_followers": 500000,
+      "notes": "Superhuman AI newsletter, productivity angle"
+    },
+    {
+      "handle": "bfrankx_ai",
+      "name": "Ben Frank AI",
+      "platforms": ["tiktok", "reels", "youtube_shorts"],
+      "tier": "mid",
+      "niche": "ai_money",
+      "estimated_followers": 180000,
+      "notes": "Make money with AI angle, young demographic"
+    },
+    {
+      "handle": "jasonyuan",
+      "name": "Jason Yuan",
+      "platforms": ["twitter", "tiktok"],
+      "tier": "mid",
+      "niche": "ai_design",
+      "estimated_followers": 150000,
+      "notes": "AI in design workflows, UX angle"
+    },
+    {
+      "handle": "therundownai",
+      "name": "The Rundown AI",
+      "platforms": ["twitter", "linkedin", "tiktok", "reels"],
+      "tier": "mega",
+      "niche": "ai_news",
+      "estimated_followers": 900000,
+      "notes": "Daily AI news aggregation, massive reach"
+    },
+    {
+      "handle": "peter.h.diamandis",
+      "name": "Peter Diamandis",
+      "platforms": ["linkedin", "twitter", "reels"],
+      "tier": "mega",
+      "niche": "ai_future",
+      "estimated_followers": 1200000,
+      "notes": "Futurist angle, abundance mindset"
+    },
+    {
+      "handle": "iamwesleychan",
+      "name": "Wesley Chan",
+      "platforms": ["tiktok", "youtube_shorts"],
+      "tier": "mid",
+      "niche": "ai_tools",
+      "estimated_followers": 250000,
+      "notes": "Tool discovery format, fast-paced editing"
+    },
+    {
+      "handle": "ainewsdaily",
+      "name": "AI News Daily",
+      "platforms": ["tiktok", "reels"],
+      "tier": "mid",
+      "niche": "ai_news",
+      "estimated_followers": 180000,
+      "notes": "News roundup format, consistent posting"
+    },
+    {
+      "handle": "mckaywrigley",
+      "name": "McKay Wrigley",
+      "platforms": ["twitter", "youtube_shorts"],
+      "tier": "mid",
+      "niche": "ai_coding",
+      "estimated_followers": 200000,
+      "notes": "AI coding tools, developer audience"
+    },
+    {
+      "handle": "elvis.ai",
+      "name": "Elvis AI",
+      "platforms": ["tiktok", "reels"],
+      "tier": "micro",
+      "niche": "ai_tutorials",
+      "estimated_followers": 80000,
+      "notes": "Step-by-step tutorials, growing fast"
+    },
+    {
+      "handle": "corbin.ai",
+      "name": "Corbin Brown",
+      "platforms": ["youtube_shorts", "tiktok"],
+      "tier": "mid",
+      "niche": "ai_automation",
+      "estimated_followers": 220000,
+      "notes": "Automation workflows, Make/Zapier focus"
+    }
+  ]
+}
