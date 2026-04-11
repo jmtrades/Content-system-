@@ -42,7 +42,7 @@ interface Competitor {
   topTopic: string;
 }
 
-const competitors: Competitor[] = [
+const mockCompetitors: Competitor[] = [
   { id: 1, name: "Matt Wolfe", handle: "@maboroshi", avatar: "MW", platforms: ["YouTube", "TikTok", "Twitter"], followers: 892000, growthRate: 8.2, avgEngagement: 5.4, postsPerWeek: 12, topTopic: "AI Tools Reviews" },
   { id: 2, name: "AI Jason", handle: "@ai_jason_", avatar: "AJ", platforms: ["YouTube", "Twitter"], followers: 654000, growthRate: 12.1, avgEngagement: 7.8, postsPerWeek: 8, topTopic: "AI Tutorials" },
   { id: 3, name: "The AI Advantage", handle: "@aiadvantage", avatar: "AA", platforms: ["YouTube", "TikTok", "Instagram"], followers: 523000, growthRate: 6.4, avgEngagement: 4.9, postsPerWeek: 15, topTopic: "AI Productivity" },
@@ -55,7 +55,7 @@ const competitors: Competitor[] = [
   { id: 10, name: "Igor Pogany", handle: "@igorpogany", avatar: "IP", platforms: ["LinkedIn", "YouTube"], followers: 134000, growthRate: 11.2, avgEngagement: 8.4, postsPerWeek: 10, topTopic: "AI Strategy" },
 ];
 
-const gapOpportunities = [
+const mockGapOpportunities = [
   { topic: "AI Agent Orchestration Patterns", score: 94, competitors: 1, demand: "Rising", difficulty: "Medium" },
   { topic: "Local LLM Setup Tutorials", score: 88, competitors: 2, demand: "High", difficulty: "Low" },
   { topic: "AI Content Moderation Tools", score: 85, competitors: 0, demand: "Growing", difficulty: "Low" },
@@ -105,12 +105,41 @@ const platformVariant: Record<string, "danger" | "info" | "warning" | "success" 
 
 export default function IntelPage() {
   const [loading, setLoading] = useState(true);
+  const [competitors, setCompetitors] = useState<Competitor[]>(mockCompetitors);
+  const [gapOpportunities, setGapOpportunities] = useState(mockGapOpportunities);
   const [platformFilter, setPlatformFilter] = useState("All");
   const [sortBy, setSortBy] = useState("followers");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(t);
+    async function fetchData() {
+      try {
+        const [gapsRes, scrapeRes] = await Promise.allSettled([
+          fetch('/api/intel/gaps'),
+          fetch('/api/intel/scrape'),
+        ]);
+
+        if (gapsRes.status === 'fulfilled' && gapsRes.value.ok) {
+          const json = await gapsRes.value.json();
+          if (json.success && json.data) {
+            setGapOpportunities(json.data);
+          }
+        }
+
+        if (scrapeRes.status === 'fulfilled' && scrapeRes.value.ok) {
+          const json = await scrapeRes.value.json();
+          if (json.success && json.data) {
+            setCompetitors(json.data);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch intel data:', err);
+        setError('Some intel data could not be loaded. Showing cached data.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
   }, []);
 
   const sorted = [...competitors].sort((a, b) => {
@@ -140,6 +169,14 @@ export default function IntelPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 p-6 space-y-6">
+      {/* Error Alert */}
+      {error && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-center justify-between">
+          <span className="text-sm text-amber-400">{error}</span>
+          <button onClick={() => setError(null)} className="text-amber-400 hover:text-amber-300 text-sm">Dismiss</button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
