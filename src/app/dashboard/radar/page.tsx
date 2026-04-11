@@ -87,19 +87,33 @@ const heatmapData = heatmapCategories.flatMap((cat) =>
 
 export default function RadarPage() {
   const [loading, setLoading] = useState(true);
-  const [items, setItems] = useState<NewsItem[]>([]);
+  const [items, setItems] = useState<NewsItem[]>(mockNews);
   const [sourceFilter, setSourceFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [processedFilter, setProcessedFilter] = useState<"all" | "processed" | "unprocessed">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [scanning, setScanning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      setItems(mockNews);
-      setLoading(false);
-    }, 600);
-    return () => clearTimeout(t);
+    async function fetchData() {
+      try {
+        const res = await fetch('/api/radar/items?limit=50&min_importance=0');
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            setItems(json.data);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch radar items:', err);
+        // Falls back to mock data already in state
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
   }, []);
 
   const filteredItems = items.filter((item) => {
@@ -111,9 +125,35 @@ export default function RadarPage() {
     return true;
   });
 
-  const handleScan = () => {
+  const handleScan = async () => {
     setScanning(true);
-    setTimeout(() => setScanning(false), 2000);
+    try {
+      const res = await fetch('/api/radar/scan', { method: 'POST' });
+      if (res.ok) {
+        const json = await res.json();
+        setToast(json.message || 'Scan completed successfully!');
+        // Re-fetch items after scan
+        try {
+          const itemsRes = await fetch('/api/radar/items?limit=50&min_importance=0');
+          if (itemsRes.ok) {
+            const itemsJson = await itemsRes.json();
+            if (itemsJson.success && itemsJson.data) {
+              setItems(itemsJson.data);
+            }
+          }
+        } catch {
+          // ignore re-fetch failure
+        }
+      } else {
+        setToast('Scan triggered but returned an error. Check logs.');
+      }
+    } catch (err) {
+      console.error('Scan failed:', err);
+      setToast('Scan request failed. Please try again.');
+    } finally {
+      setScanning(false);
+      setTimeout(() => setToast(null), 4000);
+    }
   };
 
   function timeSince(dateStr: string) {
@@ -146,6 +186,22 @@ export default function RadarPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 p-6 space-y-6">
+      {/* Toast */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 bg-gray-800 border border-gray-700 rounded-lg p-4 shadow-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+          <span className="text-sm text-gray-200">{toast}</span>
+          <button onClick={() => setToast(null)} className="text-gray-400 hover:text-gray-200 text-sm">x</button>
+        </div>
+      )}
+
+      {/* Error Alert */}
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 flex items-center justify-between">
+          <span className="text-sm text-red-400">{error}</span>
+          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300 text-sm">Dismiss</button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>

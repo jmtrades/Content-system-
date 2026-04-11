@@ -1,4 +1,4 @@
-import { getDb } from '@/lib/db';
+import { getServerClient } from '@/lib/db';
 
 const log = (msg: string) => console.log(`[optimizer] ${new Date().toISOString()} ${msg}`);
 
@@ -40,8 +40,23 @@ interface Recommendation {
 export async function weeklyOptimization(): Promise<{
   recommendations: Recommendation[];
   report: Record<string, unknown>;
+  persisted: {
+    pillarsUpdated: number;
+    scheduleSlots: number;
+    variationPresets: number;
+    hooksStored: number;
+    reportId: string | null;
+  };
 }> {
   log('Starting weekly optimization...');
+
+  const persisted = {
+    pillarsUpdated: 0,
+    scheduleSlots: 0,
+    variationPresets: 0,
+    hooksStored: 0,
+    reportId: null as string | null,
+  };
 
   try {
     const hookData = await analyzeHooks();
@@ -51,19 +66,19 @@ export async function weeklyOptimization(): Promise<{
     const revenueData = await analyzeRevenue();
 
     if (topicData.length > 0) {
-      await adjustPillarFrequencies(topicData);
+      persisted.pillarsUpdated = await adjustPillarFrequencies(topicData);
     }
 
     if (timingData.length > 0) {
-      await updatePostingSchedule(timingData);
+      persisted.scheduleSlots = await updatePostingSchedule(timingData);
     }
 
     if (formatData.length > 0) {
-      await updateVariationPresets(formatData);
+      persisted.variationPresets = await updateVariationPresets(formatData);
     }
 
     if (hookData.length > 0) {
-      await updateHookTemplates(hookData);
+      persisted.hooksStored = await updateHookTemplates(hookData);
     }
 
     const recommendations = generateRecommendations(hookData, topicData, timingData, formatData, revenueData);
@@ -77,18 +92,20 @@ export async function weeklyOptimization(): Promise<{
       recommendations,
     });
 
+    persisted.reportId = (report._id as string) || null;
+
     await calculateGrowthProjections();
 
-    log(`Weekly optimization complete. ${recommendations.length} recommendations generated.`);
-    return { recommendations, report };
+    log(`Weekly optimization complete. ${recommendations.length} recommendations generated. Persisted: ${persisted.pillarsUpdated} pillars, ${persisted.scheduleSlots} schedule slots, ${persisted.variationPresets} variation presets, ${persisted.hooksStored} hooks.`);
+    return { recommendations, report, persisted };
   } catch (error) {
     log(`Weekly optimization failed: ${error instanceof Error ? error.message : String(error)}`);
-    return { recommendations: [], report: {} };
+    return { recommendations: [], report: {}, persisted };
   }
 }
 
 async function analyzeHooks(): Promise<HookPerformance[]> {
-  const db = getDb();
+  const db = getServerClient();
   try {
     const { data: scripts } = await db
       .from('scripts')
@@ -150,7 +167,7 @@ async function analyzeHooks(): Promise<HookPerformance[]> {
 }
 
 async function analyzeTopics(): Promise<TopicPerformance[]> {
-  const db = getDb();
+  const db = getServerClient();
   try {
     const { data: pillars } = await db
       .from('scripts')
@@ -223,7 +240,7 @@ async function analyzeTopics(): Promise<TopicPerformance[]> {
 }
 
 async function analyzeTiming(): Promise<TimingPerformance[]> {
-  const db = getDb();
+  const db = getServerClient();
   try {
     const { data: posted } = await db
       .from('posting_queue')
@@ -276,7 +293,7 @@ async function analyzeTiming(): Promise<TimingPerformance[]> {
 }
 
 async function analyzeFormats(): Promise<FormatPerformance[]> {
-  const db = getDb();
+  const db = getServerClient();
   try {
     const { data: outputs } = await db
       .from('video_outputs')
@@ -338,7 +355,7 @@ async function analyzeFormats(): Promise<FormatPerformance[]> {
 }
 
 async function analyzeRevenue(): Promise<{ content_pillar: string; attributed_revenue: number; total_clicks: number }[]> {
-  const db = getDb();
+  const db = getServerClient();
   try {
     const { data: events } = await db
       .from('revenue_events')
@@ -403,36 +420,85 @@ async function analyzeRevenue(): Promise<{ content_pillar: string; attributed_re
   }
 }
 
-export async function adjustPillarFrequencies(topicData: TopicPerformance[]): Promise<void> {
-  const db = getDb();
+/**
+ * UPSERTs content_pillar_config rows with the optimised frequency values.
+ * The `frequency` column is TEXT in the schema, so we store a human-readable
+ * string like "25.0% (optimized)" alongside the raw numeric value.
+ * Returns the number of pillars successfully updated.
+ */
+export async function adjustPillarFrequencies(topicData: TopicPerformance[]): Promise<number> {
+  const db = getServerClient();
+  let updated = 0;
+
   try {
     const totalGrowth = topicData.reduce((sum, t) => sum + Math.max(0, t.total_follower_growth), 0);
     if (totalGrowth === 0) {
       log('No positive growth data — skipping pillar adjustment');
-      return;
+      return 0;
     }
 
     for (const topic of topicData) {
       const rawFrequency = Math.max(0, topic.total_follower_growth) / totalGrowth;
       const newFrequency = Math.max(0.05, Math.min(0.40, rawFrequency));
+      const frequencyLabel = `${(newFrequency * 100).toFixed(1)}%`;
 
-      const { error } = await db
+      // Try update first; if no rows matched, insert a new config row
+      const { data: existing } = await db
         .from('content_pillar_config')
-        .update({ frequency: newFrequency, updated_at: new Date().toISOString() })
-        .eq('name', topic.content_pillar);
+        .select('id')
+        .eq('name', topic.content_pillar)
+        .limit(1);
 
-      if (error) {
-        log(`Failed to update pillar ${topic.content_pillar}: ${error.message}`);
+      if (existing && existing.length > 0) {
+        const { error } = await db
+          .from('content_pillar_config')
+          .update({
+            frequency: frequencyLabel,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('name', topic.content_pillar);
+
+        if (error) {
+          log(`Failed to update pillar ${topic.content_pillar}: ${error.message}`);
+        } else {
+          updated++;
+          log(`Updated pillar ${topic.content_pillar} frequency to ${frequencyLabel}`);
+        }
       } else {
-        log(`Updated pillar ${topic.content_pillar} frequency to ${(newFrequency * 100).toFixed(1)}%`);
+        const { error } = await db
+          .from('content_pillar_config')
+          .insert({
+            name: topic.content_pillar,
+            frequency: frequencyLabel,
+            description: `Auto-created by optimizer — avg engagement ${(topic.avg_engagement * 100).toFixed(2)}%, virality ${(topic.avg_virality * 100).toFixed(2)}%`,
+            updated_at: new Date().toISOString(),
+          });
+
+        if (error) {
+          log(`Failed to insert pillar ${topic.content_pillar}: ${error.message}`);
+        } else {
+          updated++;
+          log(`Inserted new pillar config ${topic.content_pillar} with frequency ${frequencyLabel}`);
+        }
       }
     }
   } catch (error) {
     log(`Pillar frequency adjustment failed: ${error instanceof Error ? error.message : String(error)}`);
   }
+
+  return updated;
 }
 
-export async function updatePostingSchedule(timingData: TimingPerformance[]): Promise<void> {
+/**
+ * Calculates best posting times per platform and persists them to the
+ * optimizer_config table under keys like "schedule:<platform>".
+ * The posting engine reads these to determine optimal scheduling windows.
+ * Returns the total number of schedule slot entries persisted.
+ */
+export async function updatePostingSchedule(timingData: TimingPerformance[]): Promise<number> {
+  const db = getServerClient();
+  let totalSlots = 0;
+
   try {
     const platformSlots: Record<string, TimingPerformance[]> = {};
     for (const slot of timingData) {
@@ -442,43 +508,164 @@ export async function updatePostingSchedule(timingData: TimingPerformance[]): Pr
       platformSlots[slot.platform].push(slot);
     }
 
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
     for (const [platform, slots] of Object.entries(platformSlots)) {
       const topSlots = slots
         .sort((a, b) => b.avg_views - a.avg_views)
         .slice(0, 5);
 
-      log(`Top posting times for ${platform}: ${topSlots.map(s => `Day${s.day_of_week} ${s.hour}:00 (${s.avg_views.toFixed(0)} avg views)`).join(', ')}`);
+      const scheduleEntries = topSlots.map((s, rank) => ({
+        rank: rank + 1,
+        day_of_week: s.day_of_week,
+        day_name: days[s.day_of_week],
+        hour: s.hour,
+        avg_views: Math.round(s.avg_views),
+        avg_engagement: parseFloat(s.avg_engagement.toFixed(4)),
+      }));
+
+      const configKey = `schedule:${platform}`;
+      const configValue = {
+        platform,
+        optimal_slots: scheduleEntries,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await db
+        .from('optimizer_config')
+        .upsert(
+          {
+            config_key: configKey,
+            config_value: configValue,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'config_key' },
+        );
+
+      if (error) {
+        log(`Failed to persist schedule for ${platform}: ${error.message}`);
+      } else {
+        totalSlots += scheduleEntries.length;
+        log(`Persisted ${scheduleEntries.length} optimal time slots for ${platform}`);
+      }
     }
   } catch (error) {
     log(`Posting schedule update failed: ${error instanceof Error ? error.message : String(error)}`);
   }
+
+  return totalSlots;
 }
 
-export async function updateVariationPresets(formatData: FormatPerformance[]): Promise<void> {
-  try {
-    if (formatData.length === 0) return;
+/**
+ * Ranks variation configs by retention and engagement, then persists the
+ * top-performing presets to optimizer_config under key "variation_presets".
+ * The video-processor reads these presets when generating future videos.
+ * Returns the number of presets stored.
+ */
+export async function updateVariationPresets(formatData: FormatPerformance[]): Promise<number> {
+  const db = getServerClient();
 
-    const topFormats = formatData.slice(0, 5);
-    log(`Top performing formats:`);
-    for (const f of topFormats) {
-      log(`  ${f.caption_style}/${f.color_grade}/${f.text_position}: ${(f.retention * 100).toFixed(1)}% retention, ${(f.engagement * 100).toFixed(2)}% engagement`);
+  try {
+    if (formatData.length === 0) return 0;
+
+    const topFormats = formatData.slice(0, 10);
+
+    const rankedPresets = topFormats.map((f, rank) => ({
+      rank: rank + 1,
+      caption_style: f.caption_style,
+      color_grade: f.color_grade,
+      text_position: f.text_position,
+      retention: parseFloat((f.retention * 100).toFixed(2)),
+      engagement: parseFloat((f.engagement * 100).toFixed(4)),
+      // Composite score: 70% retention, 30% engagement for ranking
+      score: parseFloat(((f.retention * 0.7 + f.engagement * 0.3) * 100).toFixed(2)),
+    }));
+
+    const configValue = {
+      presets: rankedPresets,
+      total_formats_analyzed: formatData.length,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = await db
+      .from('optimizer_config')
+      .upsert(
+        {
+          config_key: 'variation_presets',
+          config_value: configValue,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'config_key' },
+      );
+
+    if (error) {
+      log(`Failed to persist variation presets: ${error.message}`);
+      return 0;
     }
+
+    log(`Persisted ${rankedPresets.length} ranked variation presets`);
+    return rankedPresets.length;
   } catch (error) {
     log(`Variation preset update failed: ${error instanceof Error ? error.message : String(error)}`);
+    return 0;
   }
 }
 
-export async function updateHookTemplates(hookData: HookPerformance[]): Promise<void> {
-  try {
-    if (hookData.length === 0) return;
+/**
+ * Ranks hooks by avg_watch_percentage and engagement_rate, then stores the
+ * top performers in optimizer_config under key "hooks".
+ * The script generator reads these to inform future hook generation.
+ * Returns the number of hooks stored.
+ */
+export async function updateHookTemplates(hookData: HookPerformance[]): Promise<number> {
+  const db = getServerClient();
 
-    const topHooks = hookData.slice(0, 10);
-    log(`Top performing hooks:`);
-    for (const h of topHooks) {
-      log(`  "${h.hook.substring(0, 60)}..." — ${(h.avg_retention * 100).toFixed(1)}% retention`);
+  try {
+    if (hookData.length === 0) return 0;
+
+    // Sort by composite score: 60% retention, 40% engagement
+    const ranked = [...hookData]
+      .map((h) => ({
+        ...h,
+        score: h.avg_retention * 0.6 + h.avg_engagement * 0.4,
+      }))
+      .sort((a, b) => b.score - a.score);
+
+    const topHooks = ranked.slice(0, 20).map((h, rank) => ({
+      rank: rank + 1,
+      hook: h.hook,
+      avg_retention: parseFloat((h.avg_retention * 100).toFixed(2)),
+      avg_engagement: parseFloat((h.avg_engagement * 100).toFixed(4)),
+      score: parseFloat((h.score * 100).toFixed(2)),
+    }));
+
+    const configValue = {
+      hooks: topHooks,
+      total_hooks_analyzed: hookData.length,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = await db
+      .from('optimizer_config')
+      .upsert(
+        {
+          config_key: 'hooks',
+          config_value: configValue,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'config_key' },
+      );
+
+    if (error) {
+      log(`Failed to persist hook templates: ${error.message}`);
+      return 0;
     }
+
+    log(`Persisted ${topHooks.length} ranked hook templates`);
+    return topHooks.length;
   } catch (error) {
     log(`Hook template update failed: ${error instanceof Error ? error.message : String(error)}`);
+    return 0;
   }
 }
 
@@ -550,6 +737,10 @@ export function generateRecommendations(
   return recommendations;
 }
 
+/**
+ * Generates and persists a weekly report to the weekly_reports table.
+ * Returns the full report object with `_id` set to the inserted row's id.
+ */
 export async function generateWeeklyReport(data: {
   hookData: HookPerformance[];
   topicData: TopicPerformance[];
@@ -558,16 +749,19 @@ export async function generateWeeklyReport(data: {
   revenueData: { content_pillar: string; attributed_revenue: number; total_clicks: number }[];
   recommendations: Recommendation[];
 }): Promise<Record<string, unknown>> {
-  const db = getDb();
+  const db = getServerClient();
   try {
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
+    const periodStart = weekAgo.toISOString().split('T')[0];
+    const periodEnd = now.toISOString().split('T')[0];
+
     const { data: weeklyAnalytics } = await db
       .from('daily_analytics')
       .select('*')
-      .gte('date', weekAgo.toISOString().split('T')[0])
-      .lte('date', now.toISOString().split('T')[0]);
+      .gte('date', periodStart)
+      .lte('date', periodEnd);
 
     const totalViews = (weeklyAnalytics || []).reduce((sum: number, d: { total_views: number }) => sum + (d.total_views || 0), 0);
     const totalFollowerGrowth = (weeklyAnalytics || []).reduce((sum: number, d: { follower_growth: number }) => sum + (d.follower_growth || 0), 0);
@@ -582,8 +776,8 @@ export async function generateWeeklyReport(data: {
 
     const report = {
       period: {
-        start: weekAgo.toISOString().split('T')[0],
-        end: now.toISOString().split('T')[0],
+        start: periodStart,
+        end: periodEnd,
       },
       summary: {
         total_views: totalViews,
@@ -600,9 +794,29 @@ export async function generateWeeklyReport(data: {
       generated_at: now.toISOString(),
     };
 
+    // Persist the report to the weekly_reports table
+    const { data: inserted, error } = await db
+      .from('weekly_reports')
+      .insert({
+        period_start: periodStart,
+        period_end: periodEnd,
+        report_data: report,
+      })
+      .select('id')
+      .single();
+
+    if (error) {
+      log(`Failed to persist weekly report: ${error.message}`);
+    } else {
+      log(`Weekly report persisted with id ${inserted.id}`);
+    }
+
     log(`Weekly report: ${totalViews} views, ${totalFollowerGrowth} followers gained, ${postsPublished} posts, £${totalRevenue.toFixed(2)} revenue`);
 
-    return report;
+    return {
+      ...report,
+      _id: inserted?.id || null,
+    };
   } catch (error) {
     log(`Weekly report generation failed: ${error instanceof Error ? error.message : String(error)}`);
     return {};
@@ -610,7 +824,7 @@ export async function generateWeeklyReport(data: {
 }
 
 export async function calculateGrowthProjections(): Promise<void> {
-  const db = getDb();
+  const db = getServerClient();
   const platforms = ['tiktok', 'instagram', 'youtube', 'linkedin', 'twitter'];
 
   try {

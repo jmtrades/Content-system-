@@ -36,14 +36,14 @@ import { formatNumber, formatCurrency } from "@/lib/utils";
 /*  Mock Data                                                          */
 /* ------------------------------------------------------------------ */
 
-const statCards = [
+const mockStatCards = [
   { title: "Total Followers", value: 127843, change: 12.4, icon: Users, format: "number" as const },
   { title: "Revenue This Month", value: 8432.5, change: 23.1, icon: DollarSign, format: "currency" as const },
   { title: "Posts Published", value: 47, change: -3.2, icon: FileText, format: "raw" as const },
   { title: "Avg Engagement Rate", value: 6.8, change: 1.9, icon: TrendingUp, format: "percent" as const },
 ];
 
-const growthData = Array.from({ length: 30 }, (_, i) => ({
+const mockGrowthData = Array.from({ length: 30 }, (_, i) => ({
   day: `${i + 1}`,
   TikTok: Math.round(45200 + i * 420 + Math.sin(i * 0.5) * 600),
   Instagram: Math.round(32100 + i * 310 + Math.sin(i * 0.4) * 400),
@@ -51,7 +51,7 @@ const growthData = Array.from({ length: 30 }, (_, i) => ({
   LinkedIn: Math.round(9400 + i * 95 + Math.sin(i * 0.6) * 200),
 }));
 
-const scheduledPosts = [
+const mockScheduledPosts = [
   { id: 1, title: "Why GPT-5 Changes Everything for Creators", platform: "TikTok", time: "Today 2:00 PM", status: "ready" },
   { id: 2, title: "5 AI Tools That Replaced My Entire Team", platform: "Instagram", time: "Today 5:30 PM", status: "ready" },
   { id: 3, title: "The $0 to $10K AI Business Blueprint", platform: "YouTube", time: "Tomorrow 10:00 AM", status: "rendering" },
@@ -72,7 +72,7 @@ const topPosts = [
   { id: 5, title: "Building $1M Business with Just AI Tools", platform: "TikTok", views: 156000, engagement: 7.9 },
 ];
 
-const alerts = [
+const mockAlerts = [
   { id: 1, type: "milestone", message: "TikTok crossed 50K followers!", time: "2h ago", priority: "high" },
   { id: 2, type: "breaking", message: "OpenAI announces GPT-5 release date — create content NOW", time: "3h ago", priority: "critical" },
   { id: 3, type: "performance", message: "AI Agents video trending #4 on TikTok", time: "5h ago", priority: "high" },
@@ -81,14 +81,14 @@ const alerts = [
   { id: 6, type: "milestone", message: "Reached 1,000 email subscribers this week", time: "12h ago", priority: "medium" },
 ];
 
-const milestones = [
+const mockMilestones = [
   { platform: "TikTok", current: 52300, goal: 100000, projected: "Jul 2026" },
   { platform: "Instagram", current: 34200, goal: 50000, projected: "Sep 2026" },
   { platform: "YouTube", current: 22100, goal: 50000, projected: "Dec 2026" },
   { platform: "LinkedIn", current: 19243, goal: 50000, projected: "Mar 2027" },
 ];
 
-const revenueWeek = [
+const mockRevenueWeek = [
   { day: "Mon", revenue: 892 },
   { day: "Tue", revenue: 1234 },
   { day: "Wed", revenue: 756 },
@@ -134,10 +134,64 @@ const alertColor: Record<string, string> = {
 
 export default function OverviewDashboard() {
   const [loading, setLoading] = useState(true);
+  const [statCards, setStatCards] = useState(mockStatCards);
+  const [scheduledPosts, setScheduledPosts] = useState(mockScheduledPosts);
+  const [revenueWeek, setRevenueWeek] = useState(mockRevenueWeek);
+  const [alerts] = useState(mockAlerts);
+  const [milestones] = useState(mockMilestones);
+  const [growthData] = useState(mockGrowthData);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 700);
-    return () => clearTimeout(t);
+    async function fetchData() {
+      try {
+        const [analyticsRes, queueRes, revenueRes] = await Promise.allSettled([
+          fetch('/api/analytics/report?period=daily'),
+          fetch('/api/distributor/queue?status=scheduled&limit=10'),
+          fetch('/api/revenue/dashboard'),
+        ]);
+
+        if (analyticsRes.status === 'fulfilled' && analyticsRes.value.ok) {
+          const json = await analyticsRes.value.json();
+          if (json.success && json.data) {
+            // Map analytics data to stat cards if available
+            const d = json.data;
+            if (d.stats || d.metrics) {
+              const stats = d.stats || d.metrics;
+              setStatCards((prev) => prev.map((card) => {
+                if (card.title === "Total Followers" && stats.totalFollowers != null) return { ...card, value: stats.totalFollowers, change: stats.followerChange ?? card.change };
+                if (card.title === "Revenue This Month" && stats.revenue != null) return { ...card, value: stats.revenue, change: stats.revenueChange ?? card.change };
+                if (card.title === "Posts Published" && stats.postsPublished != null) return { ...card, value: stats.postsPublished, change: stats.postsChange ?? card.change };
+                if (card.title === "Avg Engagement Rate" && stats.engagementRate != null) return { ...card, value: stats.engagementRate, change: stats.engagementChange ?? card.change };
+                return card;
+              }));
+            }
+          }
+        }
+
+        if (queueRes.status === 'fulfilled' && queueRes.value.ok) {
+          const json = await queueRes.value.json();
+          if (json.success && json.data) {
+            setScheduledPosts(json.data);
+          }
+        }
+
+        if (revenueRes.status === 'fulfilled' && revenueRes.value.ok) {
+          const json = await revenueRes.value.json();
+          if (json.success && json.data) {
+            if (json.data.revenueWeek || json.data.weeklyRevenue) {
+              setRevenueWeek(json.data.revenueWeek || json.data.weeklyRevenue);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch dashboard data:', err);
+        setError('Some data could not be loaded. Showing cached data.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
   }, []);
 
   if (loading) {
@@ -159,6 +213,14 @@ export default function OverviewDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-950 p-6 space-y-6">
+      {/* Error Alert */}
+      {error && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-center justify-between">
+          <span className="text-sm text-amber-400">{error}</span>
+          <button onClick={() => setError(null)} className="text-amber-400 hover:text-amber-300 text-sm">Dismiss</button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
