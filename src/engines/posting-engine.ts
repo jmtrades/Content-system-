@@ -3,6 +3,12 @@
 // ============================================================================
 
 import { getDb } from '@/lib/db';
+import { TikTokClient } from '@/lib/platforms/tiktok';
+import { InstagramClient } from '@/lib/platforms/instagram';
+import { YouTubeClient } from '@/lib/platforms/youtube';
+import { LinkedInClient } from '@/lib/platforms/linkedin';
+import { TwitterClient } from '@/lib/platforms/twitter';
+import type { PlatformUploadResult } from '@/lib/platforms/types';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -219,6 +225,116 @@ export async function processPostingQueue(): Promise<{
 }
 
 // ---------------------------------------------------------------------------
+// Error classification — determines whether a failure is retryable
+// ---------------------------------------------------------------------------
+
+/**
+ * Auth failures (invalid/expired tokens, missing API keys) should not be
+ * retried because they will always fail.  Network errors, rate limits, and
+ * transient server errors are worth retrying.
+ */
+function isTransientError(error: Error): boolean {
+  const msg = error.message.toLowerCase();
+
+  // Auth / config errors — NOT transient
+  const authPatterns = [
+    'not authenticated',
+    'authenticate() first',
+    'auth failed',
+    'token refresh failed',
+    'no refresh token',
+    'person urn not set',
+    'api key',
+    'client_key',
+    'client_secret',
+    'unauthorized',
+    '401',
+    '403',
+  ];
+  for (const pattern of authPatterns) {
+    if (msg.includes(pattern)) return false;
+  }
+
+  // Explicitly transient patterns
+  const transientPatterns = [
+    'rate limit',
+    '429',
+    '500',
+    '502',
+    '503',
+    '504',
+    'timeout',
+    'timed out',
+    'econnreset',
+    'econnrefused',
+    'enotfound',
+    'socket hang up',
+    'network',
+    'fetch failed',
+    'processing timed out',
+    'container processing',
+  ];
+  for (const pattern of transientPatterns) {
+    if (msg.includes(pattern)) return true;
+  }
+
+  // Default: treat unknown errors as transient so we at least try again
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// dispatchToPlatformAPI — Call the real platform client for a given platform
+// ---------------------------------------------------------------------------
+
+async function dispatchToPlatformAPI(
+  platform: string,
+  videoPath: string,
+  fullCaption: string,
+  hashtags: string[],
+): Promise<PlatformUploadResult> {
+  switch (platform) {
+    case 'tiktok': {
+      const client = new TikTokClient();
+      return client.uploadVideo(videoPath, fullCaption, hashtags);
+    }
+
+    case 'reels':
+    case 'instagram': {
+      // Instagram requires a publicly-accessible video URL, not a local file
+      // path. The output_path should be a URL to the hosted video (e.g. CDN/S3).
+      const client = new InstagramClient();
+      return client.uploadReel(videoPath, fullCaption);
+    }
+
+    case 'youtube_shorts': {
+      const client = new YouTubeClient();
+      // uploadShort(videoPath, title, description, tags)
+      // Use caption as both title and description; hashtags as tags
+      const title = fullCaption.split('\n')[0].slice(0, 100);
+      return client.uploadShort(videoPath, title, fullCaption, hashtags);
+    }
+
+    case 'linkedin': {
+      const client = new LinkedInClient();
+      return client.uploadVideo(videoPath, fullCaption);
+    }
+
+    case 'twitter': {
+      const client = new TwitterClient();
+      // Twitter requires a two-step flow: upload media first, then tweet
+      const mediaId = await client.uploadMedia(videoPath, 'video');
+      return client.postTweet(fullCaption, mediaId);
+    }
+
+    default:
+      return {
+        success: false,
+        error: `Unsupported platform: ${platform}`,
+      };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // postToPlatform — Attempt to post content to a specific platform
 // ---------------------------------------------------------------------------
 
@@ -247,27 +363,39 @@ export async function postToPlatform(post: {
     ? `${post.caption}\n\n${hashtagString}`
     : post.caption;
 
-  // Platform-specific posting logic
-  // In production each case would call the real platform API:
-  //   TikTok: Content Posting API
-  //   Instagram Reels: Graph API
-  //   YouTube Shorts: Data API v3
-  //   LinkedIn: Marketing API
-  //   Twitter/X: X API v2
-  // For now we generate a deterministic post ID and URL to simulate success.
+  // Fetch the video output to get the file/URL path
+  const { data: videoOutput, error: voErr } = await db
+    .from('video_outputs')
+    .select('output_path')
+    .eq('id', post.video_output_id)
+    .single();
 
-  const postId = `${post.platform}_${Date.now()}_${post.id.slice(0, 8)}`;
-  const platformUrls: Record<string, string> = {
-    tiktok: `https://www.tiktok.com/@user/video/${postId}`,
-    reels: `https://www.instagram.com/reel/${postId}/`,
-    youtube_shorts: `https://youtube.com/shorts/${postId}`,
-    linkedin: `https://www.linkedin.com/posts/${postId}`,
-    twitter: `https://x.com/user/status/${postId}`,
-  };
+  if (voErr || !videoOutput?.output_path) {
+    throw new Error(
+      `Cannot post: video output ${post.video_output_id} has no output_path`,
+    );
+  }
 
-  const postUrl = platformUrls[post.platform] ?? `https://${post.platform}.com/post/${postId}`;
+  const videoPath: string = videoOutput.output_path;
 
-  log(`[${post.platform}] Dispatched content (caption: ${fullCaption.slice(0, 60)}...)`);
+  // Dispatch to the real platform API
+  log(`[${post.platform}] Dispatching content (caption: ${fullCaption.slice(0, 60)}...)`);
+
+  const result: PlatformUploadResult = await dispatchToPlatformAPI(
+    post.platform,
+    videoPath,
+    fullCaption,
+    post.hashtags,
+  );
+
+  if (!result.success) {
+    throw new Error(
+      result.error ?? `${post.platform} upload returned success=false with no error detail`,
+    );
+  }
+
+  const postId = result.platformId ?? `${post.platform}_${Date.now()}_${post.id.slice(0, 8)}`;
+  const postUrl = result.url ?? `https://${post.platform}.com/post/${postId}`;
 
   // Update queue item as successfully posted
   const { error: updateErr } = await db
@@ -303,6 +431,20 @@ export async function handlePostFailure(postId: string, error: Error): Promise<v
   const db = getDb();
 
   logError(`Post ${postId} failed`, error);
+
+  // Non-transient errors (auth failures, missing API keys) should not be
+  // retried — they will never succeed without human intervention.
+  if (!isTransientError(error)) {
+    log(`Post ${postId} permanently failed (non-transient: ${error.message})`);
+    await db
+      .from('posting_queue')
+      .update({
+        status: 'failed',
+        error_message: `[non-retryable] ${error.message}`,
+      })
+      .eq('id', postId);
+    return;
+  }
 
   // Fetch current retry count
   const { data: post, error: fetchErr } = await db

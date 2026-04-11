@@ -16,9 +16,21 @@ import { getServerClient } from '@/lib/db';
 // ---------------------------------------------------------------------------
 import * as hackernews from '@/scrapers/hackernews';
 import * as github from '@/scrapers/github';
+import * as twitter from '@/scrapers/twitter';
 import * as reddit from '@/scrapers/reddit';
+import * as rss from '@/scrapers/rss';
 import * as producthunt from '@/scrapers/producthunt';
+import * as youtube from '@/scrapers/youtube';
 import * as arxiv from '@/scrapers/arxiv';
+
+// ---------------------------------------------------------------------------
+// Engine imports
+// ---------------------------------------------------------------------------
+import * as analyticsEngine from '@/engines/analytics-engine';
+import * as commentEngine from '@/engines/comment-engine';
+import * as scriptGenerator from '@/engines/script-generator';
+import * as optimizer from '@/engines/optimizer';
+import * as trendPredictor from '@/engines/trend-predictor';
 
 // ---------------------------------------------------------------------------
 // Logging
@@ -115,9 +127,8 @@ async function scanGitHubReleases(): Promise<void> {
 }
 
 async function scanTwitter(): Promise<void> {
-  // Twitter/X scraping requires API credentials. When the twitter scraper
-  // module is built, import and call it here. For now, log a placeholder.
-  log('twitter', 'Twitter scanner not yet implemented — skipping');
+  const items = await twitter.scanAccounts();
+  await persistScrapedItems('twitter', items);
 }
 
 async function scanReddit(): Promise<void> {
@@ -131,9 +142,8 @@ async function scanGitHubTrending(): Promise<void> {
 }
 
 async function scanRSS(): Promise<void> {
-  // RSS scanner will process all RSS-type sources from config/sources.json.
-  // When the RSS scraper module is built, import and call it here.
-  log('rss', 'RSS scanner not yet implemented — skipping');
+  const items = await rss.scanFeeds();
+  await persistScrapedItems('rss', items);
 }
 
 async function scanProductHunt(): Promise<void> {
@@ -142,9 +152,8 @@ async function scanProductHunt(): Promise<void> {
 }
 
 async function scanYouTube(): Promise<void> {
-  // YouTube scraping requires API key. When the YouTube scraper module is
-  // built, import and call it here.
-  log('youtube', 'YouTube scanner not yet implemented — skipping');
+  const items = await youtube.scanChannels();
+  await persistScrapedItems('youtube', items);
 }
 
 async function scanArXiv(): Promise<void> {
@@ -254,55 +263,15 @@ async function detectContentGaps(): Promise<void> {
 // ============================================================================
 
 async function runDailyBatch(): Promise<void> {
-  const db = getServerClient();
-
-  // Find the top unprocessed radar items and generate scripts
-  const { data: items, error } = await db
-    .from('radar_items')
-    .select('*')
-    .eq('processed', false)
-    .order('importance_score', { ascending: false })
-    .limit(10);
-
-  if (error) {
-    logError('writer', 'Failed to fetch unprocessed items', error);
-    return;
-  }
-
-  log('writer', `Found ${items?.length ?? 0} unprocessed items for daily batch`);
-
-  // When the writer engine is built, pass each item to the script generator.
-  // For now, mark items as processed to prevent re-queuing.
-  if (items && items.length > 0) {
-    const ids = items.map((i: { id: string }) => i.id);
-    const { error: updateErr } = await db
-      .from('radar_items')
-      .update({ processed: true })
-      .in('id', ids);
-
-    if (updateErr) {
-      logError('writer', 'Failed to mark items as processed', updateErr);
-    }
-  }
+  log('writer', 'Starting daily batch script generation...');
+  const scripts = await scriptGenerator.generateDailyBatch();
+  log('writer', `Daily batch complete: ${scripts.length} scripts generated`);
 }
 
 async function runWeeklyEvergreen(): Promise<void> {
-  log('writer', 'Generating weekly evergreen content ideas...');
-
-  const db = getServerClient();
-
-  // Fetch top-performing content pillars for evergreen topic generation
-  const { data: pillars, error } = await db
-    .from('content_pillar_config')
-    .select('*');
-
-  if (error) {
-    logError('writer', 'Failed to fetch content pillars', error);
-    return;
-  }
-
-  log('writer', `Processing ${pillars?.length ?? 0} pillars for evergreen content`);
-  // When the writer engine is built, generate evergreen scripts per pillar here.
+  log('writer', 'Generating weekly evergreen content...');
+  const scripts = await scriptGenerator.generateWeeklyEvergreen();
+  log('writer', `Weekly evergreen complete: ${scripts.length} scripts generated`);
 }
 
 // ============================================================================
@@ -372,8 +341,8 @@ async function processPostingQueue(): Promise<void> {
 
 async function scrapeAnalytics(): Promise<void> {
   log('brain', 'Scraping platform analytics...');
-  // When platform API modules are built, pull analytics for each connected
-  // platform and store in post_analytics / daily_analytics tables.
+  const result = await analyticsEngine.scrapeAnalytics();
+  log('brain', `Analytics scrape done: ${result.posts_checked} checked, ${result.analytics_collected} collected, ${result.errors.length} errors`);
 }
 
 async function runDailyRollup(): Promise<void> {
@@ -420,25 +389,8 @@ async function runDailyRollup(): Promise<void> {
 
 async function runWeeklyOptimization(): Promise<void> {
   log('brain', 'Running weekly content optimization analysis...');
-
-  const db = getServerClient();
-  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-  // Fetch this week's daily analytics across all platforms
-  const { data: weekData, error } = await db
-    .from('daily_analytics')
-    .select('*')
-    .gte('date', weekAgo)
-    .order('date', { ascending: true });
-
-  if (error) {
-    logError('brain', 'Failed to fetch weekly analytics', error);
-    return;
-  }
-
-  log('brain', `Analyzed ${weekData?.length ?? 0} daily analytics records for optimization`);
-  // When the optimization engine is built, analyze pillar performance,
-  // posting times, and content formats to generate recommendations.
+  const result = await optimizer.weeklyOptimization();
+  log('brain', `Weekly optimization complete: ${result.recommendations.length} recommendations generated`);
 }
 
 async function runGrowthProjections(): Promise<void> {
@@ -499,54 +451,15 @@ async function runGrowthProjections(): Promise<void> {
 // ============================================================================
 
 async function processComments(): Promise<void> {
-  const db = getServerClient();
-
-  const { data: unprocessed, error } = await db
-    .from('comments')
-    .select('*')
-    .eq('responded', false)
-    .eq('requires_response', true)
-    .order('created_at', { ascending: true })
-    .limit(20);
-
-  if (error) {
-    logError('community', 'Failed to fetch unprocessed comments', error);
-    return;
-  }
-
-  if (!unprocessed || unprocessed.length === 0) {
-    return;
-  }
-
-  log('community', `Processing ${unprocessed.length} comments requiring response`);
-  // When the community engine is built, generate and post responses here.
-  // For now, log each comment that needs attention.
-  for (const comment of unprocessed) {
-    log('community', `  Needs response: [${comment.platform}] ${comment.author_handle}: "${comment.content?.substring(0, 80)}..."`);
-  }
+  log('community', 'Processing unresponded comments...');
+  const result = await commentEngine.processComments();
+  log('community', `Comment processing done: ${result.processed} processed, ${result.responded} responded, ${result.errors} errors`);
 }
 
 async function processDMs(): Promise<void> {
-  const db = getServerClient();
-
-  const { data: openDMs, error } = await db
-    .from('dm_conversations')
-    .select('*')
-    .eq('status', 'open')
-    .order('last_message_at', { ascending: true })
-    .limit(10);
-
-  if (error) {
-    logError('community', 'Failed to fetch open DMs', error);
-    return;
-  }
-
-  if (!openDMs || openDMs.length === 0) {
-    return;
-  }
-
-  log('community', `Processing ${openDMs.length} open DM conversations`);
-  // When the community engine is built, triage and respond to DMs here.
+  log('community', 'Processing open DM conversations...');
+  const suggestions = await commentEngine.processDMs();
+  log('community', `DM processing done: ${suggestions.length} response suggestions generated`);
 }
 
 // ============================================================================
@@ -556,73 +469,32 @@ async function processDMs(): Promise<void> {
 async function detectTrends(): Promise<void> {
   log('trends', 'Running cross-platform trend detection...');
 
-  const db = getServerClient();
-  const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+  // Use the trend predictor engine for full signal analysis
+  const trends = await trendPredictor.detectEmergingTrends();
+  log('trends', `Detected ${trends.length} emerging trends`);
 
-  // Count mentions by topic/category across recent radar items
-  const { data: recentItems, error } = await db
-    .from('radar_items')
-    .select('title, category, importance_score, trending_velocity')
-    .gte('created_at', sixHoursAgo);
+  // Auto-generate scripts for high-confidence trends that recommend immediate action
+  const highConfidenceTrends = trends.filter(
+    (t) => t.recommended_action === 'create_immediately' || t.recommended_action === 'create_content_immediately',
+  );
 
-  if (error) {
-    logError('trends', 'Failed to fetch recent items for trend detection', error);
-    return;
-  }
-
-  if (!recentItems || recentItems.length === 0) {
-    log('trends', 'No recent items for trend analysis');
-    return;
-  }
-
-  // Group by category and calculate composite scores
-  const categoryScores: Record<string, { count: number; totalImportance: number; totalVelocity: number }> = {};
-  for (const item of recentItems) {
-    const cat = item.category ?? 'unknown';
-    if (!categoryScores[cat]) {
-      categoryScores[cat] = { count: 0, totalImportance: 0, totalVelocity: 0 };
-    }
-    categoryScores[cat].count += 1;
-    categoryScores[cat].totalImportance += item.importance_score ?? 0;
-    categoryScores[cat].totalVelocity += item.trending_velocity ?? 0;
-  }
-
-  // Categories with 3+ mentions and high average importance are trends
-  const trendInserts: Record<string, unknown>[] = [];
-  for (const [topic, scores] of Object.entries(categoryScores)) {
-    if (scores.count >= 3) {
-      const avgImportance = scores.totalImportance / scores.count;
-      const compositeScore = (scores.count * 10 + avgImportance + scores.totalVelocity) / 3;
-      const confidence = Math.min(1, compositeScore / 100);
-
-      let recommendedAction: string;
-      if (compositeScore >= 80) recommendedAction = 'create_immediately';
-      else if (compositeScore >= 60) recommendedAction = 'prepare_script';
-      else if (compositeScore >= 40) recommendedAction = 'monitor';
-      else recommendedAction = 'ignore';
-
-      trendInserts.push({
-        topic,
-        velocity: scores.totalVelocity / scores.count,
-        cross_platform_score: scores.count * 10,
-        influencer_adoption: 0,
-        confidence,
-        recommended_action: recommendedAction,
-        actioned: false,
-      });
+  if (highConfidenceTrends.length > 0) {
+    log('trends', `Auto-generating scripts for ${highConfidenceTrends.length} high-confidence trends`);
+    for (const trend of highConfidenceTrends) {
+      try {
+        const script = await scriptGenerator.generateScript(
+          `TRENDING: ${trend.topic}`,
+          'breaking_news',
+        );
+        log('trends', `Generated script ${script.id} for trending topic "${trend.topic}"`);
+      } catch (err) {
+        logError('trends', `Failed to auto-generate script for trend "${trend.topic}"`, err);
+      }
     }
   }
 
-  if (trendInserts.length > 0) {
-    const { error: insertErr } = await db.from('trend_predictions').insert(trendInserts);
-    if (insertErr) {
-      logError('trends', 'Failed to insert trend predictions', insertErr);
-    } else {
-      log('trends', `Detected ${trendInserts.length} trending topics`);
-    }
-  } else {
-    log('trends', 'No significant trends detected in this cycle');
-  }
+  // Also evaluate past predictions to improve accuracy over time
+  await trendPredictor.evaluatePastPredictions();
 }
 
 // ============================================================================
