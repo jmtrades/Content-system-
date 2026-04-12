@@ -54,6 +54,7 @@ const navigation: NavSection[] = [
   {
     title: "Content",
     items: [
+      { label: "Upload & Launch", href: "/dashboard/upload", icon: Film },
       { label: "Studio", href: "/dashboard/studio", icon: Film },
     ],
   },

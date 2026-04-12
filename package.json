@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed": "npx tsx scripts/seed-sources.ts",
+    "setup": "bash scripts/setup.sh"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.103.0",
