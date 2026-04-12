@@ -32,6 +32,11 @@ import * as scriptGenerator from '@/engines/script-generator';
 import * as optimizer from '@/engines/optimizer';
 import * as trendPredictor from '@/engines/trend-predictor';
 
+// Hypergrowth engine — lazy import to avoid circular deps
+async function getHypergrowthEngine() {
+  return await import('@/engines/hypergrowth-engine');
+}
+
 // ---------------------------------------------------------------------------
 // Logging
 // ---------------------------------------------------------------------------
@@ -573,6 +578,37 @@ async function cleanupOldData(): Promise<void> {
 }
 
 // ============================================================================
+// HYPERGROWTH JOBS — Maximum velocity content pipeline
+// ============================================================================
+
+async function runBreakingNewsPipeline(): Promise<void> {
+  const engine = await getHypergrowthEngine();
+  const result = await engine.breakingNewsPipeline();
+  if (result.triggered) {
+    log('hypergrowth', `BREAKING NEWS: ${result.scriptIds.length} scripts created, ${result.scheduledPosts} posts scheduled`);
+  }
+}
+
+async function runFillCalendar(): Promise<void> {
+  const engine = await getHypergrowthEngine();
+  const result = await engine.fillPostingCalendar();
+  log('hypergrowth', `Calendar: ${result.slots_filled}/${result.total_slots} slots filled`);
+}
+
+async function runAdjustVolume(): Promise<void> {
+  const engine = await getHypergrowthEngine();
+  await engine.adjustVolume();
+}
+
+async function runTrendSpeedCheck(): Promise<void> {
+  const engine = await getHypergrowthEngine();
+  const result = await engine.trendSpeedCheck();
+  if (result.scripts_created > 0) {
+    log('hypergrowth', `SPEED CHECK: ${result.trends_found} trends, ${result.scripts_created} scripts created (beat competitors)`);
+  }
+}
+
+// ============================================================================
 // CRON SCHEDULE REGISTRATION
 // ============================================================================
 
@@ -600,9 +636,14 @@ function registerAllJobs(): void {
   cron.schedule('0 */6 * * *', safeTask('intel:gap-detection', detectContentGaps));
 
   // -------------------------------------------------------------------------
-  // WRITER — Content generation
+  // WRITER — Content generation (HYPERGROWTH: 7 batches/day, not 1)
   // -------------------------------------------------------------------------
-  cron.schedule('0 6 * * *', safeTask('writer:daily-batch', runDailyBatch));
+  cron.schedule('0 6 * * *', safeTask('writer:batch-morning', runDailyBatch));
+  cron.schedule('0 9 * * *', safeTask('writer:batch-9am', runDailyBatch));
+  cron.schedule('0 12 * * *', safeTask('writer:batch-noon', runDailyBatch));
+  cron.schedule('0 15 * * *', safeTask('writer:batch-3pm', runDailyBatch));
+  cron.schedule('0 18 * * *', safeTask('writer:batch-6pm', runDailyBatch));
+  cron.schedule('0 21 * * *', safeTask('writer:batch-9pm', runDailyBatch));
   cron.schedule('0 0 * * 0', safeTask('writer:weekly-evergreen', runWeeklyEvergreen));
 
   // -------------------------------------------------------------------------
@@ -625,9 +666,17 @@ function registerAllJobs(): void {
   cron.schedule('0 */2 * * *', safeTask('community:dms', processDMs));
 
   // -------------------------------------------------------------------------
-  // TRENDS — Trend detection & prediction
+  // TRENDS — Trend detection (HYPERGROWTH: every 15min, not 4h)
   // -------------------------------------------------------------------------
-  cron.schedule('0 */4 * * *', safeTask('trends:detect', detectTrends));
+  cron.schedule('*/15 * * * *', safeTask('trends:detect', detectTrends));
+
+  // -------------------------------------------------------------------------
+  // HYPERGROWTH — Breaking news pipeline + calendar fill + volume scaling
+  // -------------------------------------------------------------------------
+  cron.schedule('*/5 * * * *', safeTask('hypergrowth:breaking-news', runBreakingNewsPipeline));
+  cron.schedule('*/30 * * * *', safeTask('hypergrowth:fill-calendar', runFillCalendar));
+  cron.schedule('0 */6 * * *', safeTask('hypergrowth:adjust-volume', runAdjustVolume));
+  cron.schedule('*/15 * * * *', safeTask('hypergrowth:trend-speed', runTrendSpeedCheck));
 
   // -------------------------------------------------------------------------
   // SYSTEM — Health & maintenance
@@ -635,16 +684,18 @@ function registerAllJobs(): void {
   cron.schedule('*/5 * * * *', safeTask('system:health-check', healthCheck));
   cron.schedule('0 0 * * *', safeTask('system:cleanup', cleanupOldData));
 
-  log('system', 'All cron jobs registered successfully');
+  log('system', '=== ALL CRON JOBS REGISTERED (HYPERGROWTH MODE) ===');
   log('system', 'Schedule summary:');
-  log('system', '  Radar:       HN/10m, GitHub-releases/15m, Twitter/15m, Reddit/20m, GitHub-trending/30m, RSS/30m, ProductHunt/2h, YouTube/4h, arXiv/6h');
-  log('system', '  Intel:       competitor-posts/3h, competitor-analytics/daily@midnight, gap-detection/6h');
-  log('system', '  Writer:      daily-batch@6AM, weekly-evergreen/Sunday@midnight');
-  log('system', '  Distributor: process-queue/1m');
-  log('system', '  Brain:       analytics/4h, daily-rollup@11PM, weekly-optimization/Monday@midnight, growth-projections/12h');
-  log('system', '  Community:   comments/30m, DMs/2h');
-  log('system', '  Trends:      detect/4h');
-  log('system', '  System:      health/5m, cleanup/daily@midnight');
+  log('system', '  Radar:        HN/10m, GitHub-releases/15m, Twitter/15m, Reddit/20m, GitHub-trending/30m, RSS/30m, PH/2h, YT/4h, arXiv/6h');
+  log('system', '  Intel:        competitor-posts/3h, competitor-analytics/daily, gap-detection/6h');
+  log('system', '  Writer:       7x daily batches (6AM,9AM,12PM,3PM,6PM,9PM), evergreen/Sunday');
+  log('system', '  Distributor:  process-queue/1m');
+  log('system', '  Brain:        analytics/4h, daily-rollup@11PM, weekly-optimization/Monday, projections/12h');
+  log('system', '  Community:    comments/30m, DMs/2h');
+  log('system', '  Trends:       detect/15m (hypergrowth speed)');
+  log('system', '  Hypergrowth:  breaking-news/5m, fill-calendar/30m, adjust-volume/6h, trend-speed/15m');
+  log('system', '  System:       health/5m, cleanup/daily');
+  log('system', '  TARGET:       26+ posts/day, <5min breaking news response, 1M followers/30 days');
 }
 
 // ============================================================================
