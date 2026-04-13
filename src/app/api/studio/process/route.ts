@@ -3,77 +3,125 @@
 // ============================================================================
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { getDb } from '@/lib/db';
 import { runFullPipeline, getPipelineStatus } from '@/engines/master-pipeline';
 
 // ---------------------------------------------------------------------------
-// POST handler — starts the master pipeline
+// Schema
+// ---------------------------------------------------------------------------
+
+const processSchema = z.object({
+  input_path: z.string().min(1),
+  script_id: z.string().uuid().optional(),
+  script_text: z.string().optional(),
+  hook_text: z.string().optional(),
+  key_points: z.array(z.string()).optional(),
+  edit_style: z.string().optional(),
+  platforms: z.array(z.string()).optional(),
+  priority: z.enum(['low', 'normal', 'high']).default('normal'),
+});
+
+// ---------------------------------------------------------------------------
+// POST handler — kicks off the full master pipeline
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const {
-      input_path,
-      script_id: _scriptId,
-      script_text,
-      hook_text,
-      key_points,
-      style,
-      platforms,
-    } = body;
+    const parsed = processSchema.safeParse(body);
 
-    if (!input_path) {
+    if (!parsed.success) {
       return NextResponse.json(
-        { success: false, error: 'input_path is required' },
+        { success: false, error: 'Validation failed', details: parsed.error.flatten() },
         { status: 400 },
       );
     }
 
-    // Run the full master pipeline asynchronously
-    // (returns immediately, pipeline runs in background)
-    const pipelinePromise = runFullPipeline({
-      videoPath: input_path,
-      scriptText: script_text,
-      hookText: hook_text,
-      keyPoints: key_points,
-      editStyle: style || 'hormozi',
-      platforms: platforms || ['tiktok', 'reels', 'youtube_shorts', 'linkedin', 'twitter'],
-    });
+    const {
+      input_path,
+      script_id,
+      script_text,
+      hook_text,
+      key_points,
+      edit_style,
+      platforms,
+    } = parsed.data;
 
-    // Wait up to 5 seconds for initial steps, then return
-    const result = await Promise.race([
-      pipelinePromise,
-      new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
-    ]);
+    const db = getDb();
 
-    if (result) {
-      // Pipeline completed within 5 seconds (unlikely for full pipeline)
-      return NextResponse.json({
-        success: true,
-        data: {
-          status: 'completed',
-          script_id: result.scriptId,
-          total_pieces: result.totalContentPieces,
-          scheduled_posts: result.scheduledPosts,
-          viral_score: result.viralScore,
-          flywheel_posts: result.flywheelSequenced,
-          errors: result.errors,
-          timings: result.timings,
-        },
-      }, { status: 200 });
+    // If a script_id was supplied, fetch the script text from DB
+    let resolvedScriptText = script_text;
+    let resolvedHookText = hook_text;
+
+    if (script_id) {
+      const { data: script, error: scriptErr } = await db
+        .from('video_scripts')
+        .select('id, topic, hook, body, status, platform_versions')
+        .eq('id', script_id)
+        .single();
+
+      if (scriptErr || !script) {
+        return NextResponse.json(
+          { success: false, error: 'Script not found' },
+          { status: 404 },
+        );
+      }
+
+      resolvedScriptText = resolvedScriptText || script.body;
+      resolvedHookText = resolvedHookText || script.hook || script.topic;
+
+      // Update script status to editing
+      await db
+        .from('video_scripts')
+        .update({ status: 'editing' })
+        .eq('id', script_id);
     }
 
-    // Pipeline still running — return immediately with status
-    const status = getPipelineStatus();
+    // Create a job record for tracking
+    const { data: job, error: jobErr } = await db
+      .from('video_jobs')
+      .insert({
+        script_id: script_id || null,
+        input_path,
+        status: 'queued',
+        processing_started_at: null,
+        processing_completed_at: null,
+        error_message: null,
+      })
+      .select()
+      .single();
+
+    if (jobErr) {
+      return NextResponse.json(
+        { success: false, error: jobErr.message },
+        { status: 500 },
+      );
+    }
+
+    // Fire the full master pipeline asynchronously
+    runFullPipelineAsync(job.id, {
+      videoPath: input_path,
+      scriptText: resolvedScriptText,
+      hookText: resolvedHookText,
+      keyPoints: key_points,
+      editStyle: edit_style,
+      platforms,
+    }).catch((err) => {
+      console.error(`[api:studio/process] Pipeline job ${job.id} failed:`, err);
+    });
+
     return NextResponse.json({
       success: true,
       data: {
-        status: 'processing',
-        current_step: status.currentStep,
-        progress: status.progress,
-        message: 'Pipeline started — processing video through all engines',
+        job_id: job.id,
+        status: 'queued',
+        script_id: script_id || null,
+        input_path,
+        created_at: job.created_at,
+        message: 'Master pipeline started — all 10 steps will execute automatically.',
       },
-    }, { status: 202 });
+    }, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('[api:studio/process] POST error:', message);
@@ -85,13 +133,87 @@ export async function POST(req: NextRequest) {
 }
 
 // ---------------------------------------------------------------------------
-// GET handler — check pipeline status
+// GET handler — returns current pipeline status
 // ---------------------------------------------------------------------------
 
 export async function GET() {
-  const status = getPipelineStatus();
-  return NextResponse.json({
-    success: true,
-    data: status,
-  });
+  try {
+    const status = await getPipelineStatus();
+    return NextResponse.json({ success: true, data: status });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json(
+      { success: false, error: message },
+      { status: 500 },
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Async pipeline execution (fires and forgets from the request handler)
+// ---------------------------------------------------------------------------
+
+async function runFullPipelineAsync(
+  jobId: string,
+  config: {
+    videoPath: string;
+    scriptText?: string;
+    hookText?: string;
+    keyPoints?: string[];
+    editStyle?: string;
+    platforms?: string[];
+  },
+): Promise<void> {
+  const db = getDb();
+
+  try {
+    // Mark job as processing
+    await db
+      .from('video_jobs')
+      .update({
+        status: 'processing',
+        processing_started_at: new Date().toISOString(),
+      })
+      .eq('id', jobId);
+
+    // Run the full master pipeline
+    const pipelineResult = await runFullPipeline(config);
+
+    // Mark job as completed with pipeline summary
+    await db
+      .from('video_jobs')
+      .update({
+        status: 'completed',
+        processing_completed_at: new Date().toISOString(),
+        error_message: pipelineResult.errors.length > 0
+          ? pipelineResult.errors.join('; ')
+          : null,
+      })
+      .eq('id', jobId);
+
+    // Update associated script status if we have one
+    if (pipelineResult.scriptId) {
+      await db
+        .from('video_scripts')
+        .update({ status: 'review' })
+        .eq('id', pipelineResult.scriptId);
+    }
+
+    console.log(
+      `[api:studio/process] Job ${jobId} completed — ` +
+      `${pipelineResult.totalContentPieces} pieces, ` +
+      `${pipelineResult.scheduledPosts} posts scheduled, ` +
+      `viral score: ${pipelineResult.viralScore}/100`,
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    await db
+      .from('video_jobs')
+      .update({
+        status: 'failed',
+        error_message: message,
+        processing_completed_at: new Date().toISOString(),
+      })
+      .eq('id', jobId);
+  }
 }
