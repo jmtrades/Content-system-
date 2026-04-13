@@ -94,24 +94,49 @@ const contentPillars: ContentPillar[] = [
 // ---------------------------------------------------------------------------
 
 const hookTemplates: string[] = [
-  'Stop scrolling. {topic} just changed everything.',
-  'Nobody is talking about this {topic} trick...',
-  'I tested {topic} so you don\'t have to. Here\'s what happened.',
-  'POV: You just discovered {topic} and your mind is blown.',
-  'This {topic} hack saved me 10 hours this week.',
-  '{topic} is here and it\'s terrifying. Here\'s why.',
-  'Delete your old workflow. {topic} makes it obsolete.',
-  'Hot take: {topic} is overhyped. Let me explain.',
-  'I asked AI to {topic}. The result was insane.',
-  'If you\'re not using {topic} yet, you\'re already behind.',
-  'The {topic} secret that top creators don\'t share.',
-  'WARNING: {topic} will make you rethink everything.',
-  '3 things about {topic} that nobody tells you.',
-  'I went from zero to pro with {topic} in one day.',
-  'Your boss doesn\'t want you to know about {topic}.',
-  'This changes EVERYTHING about {topic}.',
-  'Why {topic} is the biggest opportunity right now.',
-  'The {topic} mistake that 90% of people make.',
+  // --- CURIOSITY (5) ---
+  'I found something about {topic} that nobody is talking about.',
+  'There is a hidden feature inside {topic} that changes the entire game.',
+  'I spent 48 hours testing {topic}. What I found surprised even me.',
+  'Everyone is using {topic} wrong. Let me show you what actually works.',
+  'The {topic} trick that 1% of people know about — and it is free.',
+
+  // --- FEAR (4) ---
+  'If you are still doing {old_thing}, you are already behind on {topic}.',
+  'Stop what you are doing. {topic} just made your current workflow obsolete.',
+  '{topic} is quietly replacing people who ignore it. Here is the proof.',
+  'Your competitors already switched to {topic}. You have about 30 days.',
+
+  // --- AUTHORITY (4) ---
+  'After testing 100+ tools, here is the only {topic} stack that actually works.',
+  'I have generated $2M using {topic}. Here is the exact framework.',
+  'I reviewed every {topic} option on the market. Only 3 are worth your time.',
+  '10,000 hours with {topic} taught me one thing nobody talks about.',
+
+  // --- CONTROVERSY (4) ---
+  'Unpopular opinion: {topic} is massively overhyped — and here is why that is good for you.',
+  'Everyone is celebrating {topic}. They are missing the real story.',
+  'I am going to say what no creator will about {topic}.',
+  'Hot take: the people hyping {topic} have never actually used it.',
+
+  // --- URGENCY (4) ---
+  '{company} just quietly released a {topic} update that changes everything.',
+  'This {topic} window closes in 90 days. Here is how to move now.',
+  '{topic} just had its biggest update ever and nobody covered it.',
+  'The {topic} opportunity that exists right now will not exist in 6 months.',
+
+  // --- SOCIAL PROOF (4) ---
+  '47,000 people switched to {topic} this month. Here is why.',
+  'Every creator I know just adopted {topic}. The results are insane.',
+  'My audience asked me to cover {topic} 200 times. So I finally tested it.',
+  'The top 1% of creators all use {topic}. I reverse-engineered their setup.',
+
+  // --- STORY (5) ---
+  'I went from $0 to $10K/month using {topic} in 90 days. Here is the framework.',
+  'Last year I was struggling with content. Then I found {topic}.',
+  'I almost quit creating. {topic} saved my entire business.',
+  'Six months ago I could not even explain {topic}. Now it runs my workflow.',
+  'I replaced my entire team with {topic}. Here is exactly what happened.',
 ];
 
 // ---------------------------------------------------------------------------
@@ -516,48 +541,157 @@ export function buildPrompt(
   const hookTemplate = hookTemplates[Math.floor(Math.random() * hookTemplates.length)];
   const exampleHook = hookTemplate.replace(/\{topic\}/g, topic.split(' ').slice(0, 3).join(' '));
 
-  return `You are an elite short-form video scriptwriter specializing in AI and tech content.
-Your scripts consistently get millions of views because they combine irresistible hooks,
-dense value, and strong calls to action.
+  // Platform-specific writing directives
+  const platformDirectives: Record<string, string> = {
+    tiktok: `PLATFORM DIRECTIVE — TikTok:
+- Open MID-SENTENCE. No greeting. Viewer lands in the middle of the thought.
+- Use "POV:" and "Wait for it" patterns where natural (not forced).
+- End on a cliffhanger or open loop that demands a comment or Part 2.
+- Pacing: fastest of all platforms. One idea per sentence. No pauses.
+- Sound-first — script must work even as pure audio.`,
+    reels: `PLATFORM DIRECTIVE — Instagram Reels:
+- Front-load the value in the first sentence. Muted viewers read text overlays.
+- Design the body so every beat works as a standalone text-on-screen moment.
+- CTA must include "Save this" or "Send to someone who needs this."
+- Pacing: slightly slower than TikTok. Allow 1-beat pauses for text reading.
+- Visual-first — every sentence should pair with a clear on-screen graphic.`,
+    youtube_shorts: `PLATFORM DIRECTIVE — YouTube Shorts:
+- Longer setup is acceptable. YouTube viewers tolerate 5-8s of context.
+- Deliver a DEEPER insight than TikTok or Reels — viewers expect more substance.
+- CTA must be subscribe-oriented: "Subscribe if you want more breakdowns like this."
+- Pacing: medium. You have room for a brief story or analogy.
+- Discovery-first — title/caption keywords matter for YouTube search.`,
+    linkedin: `PLATFORM DIRECTIVE — LinkedIn:
+- Professional framing. Reference data points, industry reports, or named companies.
+- Take a CONTRARIAN angle — challenge conventional wisdom with evidence.
+- End with a genuine question that invites senior professionals to comment.
+- Pacing: deliberate and authoritative. Short paragraphs, not bullet-fire.
+- Credibility-first — cite specific numbers, timeframes, company names.`,
+    twitter: `PLATFORM DIRECTIVE — Twitter/X:
+- Thread-optimized: every single sentence must be a standalone tweetable quote.
+- Open with the single most surprising or provocative claim.
+- End with a clear "Repost if you agree" or "Bookmark this" CTA.
+- Pacing: staccato. Fragment sentences are fine. Punch and move.
+- Shareability-first — every line should be screenshot-worthy.`,
+  };
 
+  const platformDir = platformDirectives[platform] || platformDirectives.tiktok;
+
+  return `You are a world-class short-form video scriptwriter. You write scripts that perform like content from Alex Hormozi, MrBeast, and Gary Vee — not because you copy them, but because you understand the psychological architecture underneath their best-performing content.
+
+=============================================================
+CHARACTER / VOICE DNA
+=============================================================
+Write as a SPECIFIC persona:
+- Confident but not arrogant. Slightly irreverent. Deeply knowledgeable.
+- Uses SHORT punchy sentences. Rarely more than 12 words.
+- Speaks in PATTERNS OF THREE (three examples, three beats, three contrasts).
+- Constantly contrasts the OLD way vs the NEW way.
+- Never hedges. Never says "might" or "could potentially." States facts and moves on.
+- Sounds like a smart friend who just discovered something and grabbed you by the arm to tell you.
+- Uses concrete specifics — dollar amounts, time saved, exact tool names, version numbers.
+
+=============================================================
 CONTENT PILLAR: ${pillar}
+=============================================================
 Pillar description: ${pillarDesc}
 Monetization angle: ${pillarMoney}
 
-TOPIC: ${topic}
+=============================================================
+TOPIC
+=============================================================
+${topic}
 
-TARGET PLATFORM: ${platform}
+=============================================================
+PLATFORM CONSTRAINTS
+=============================================================
+Target platform: ${platform}
 Max duration: ${constraints.max_duration} seconds
 Aspect ratio: ${constraints.aspect_ratio}
 Max caption length: ${constraints.max_caption} characters
 
-HOOK INSPIRATION (adapt, do not copy verbatim): "${exampleHook}"
+${platformDir}
 
-RULES:
-1. The HOOK must stop the scroll in under 3 seconds. Use pattern interrupts, curiosity gaps, or shock value.
-2. The BODY must deliver dense, actionable value. No fluff. Every sentence earns its place.
-3. The CTA must feel natural and create urgency (not "like and subscribe" generic stuff).
-4. Keep the estimated duration under ${constraints.max_duration} seconds.
-5. Caption should be optimized for ${platform} with relevant keywords.
-6. Include 3-7 trending and niche hashtags.
-7. Text overlay suggestions should highlight key moments visually.
+=============================================================
+HOOK INSPIRATION
+=============================================================
+Adapt this template (do NOT copy verbatim): "${exampleHook}"
+Generate 3 additional hook variants using DIFFERENT psychological triggers (curiosity, fear, authority, controversy, urgency, social proof, or story).
 
+=============================================================
+PROVEN SCRIPT ARCHITECTURE (follow this structure exactly)
+=============================================================
+
+HOOK (0-3 seconds):
+  Pattern interrupt -> curiosity gap -> implicit promise.
+  The viewer must feel "I CANNOT scroll past this."
+  One sentence. Maximum two. No greetings. No pleasantries.
+
+TENSION (3-8 seconds):
+  Identify the VILLAIN. This is the outdated method, the common mistake, or the hidden cost.
+  Use the format: "Most people do X. That is the problem."
+  Create an information gap the viewer NEEDS closed.
+
+VALUE (8-35 seconds):
+  Deliver the core insight using the "Not X, but Y" framework.
+  Requirements:
+  - At least ONE concrete example with specific numbers (dollars, hours, percentages).
+  - At least ONE "Not X, but Y" reframe.
+  - Exactly 2-3 "screenshot moments" — single sentences so quotable people will literally screenshot them.
+  - Mark each screenshot moment with [SCREENSHOT MOMENT] in the body text.
+  - Speak in patterns of three where possible: "First... Second... Third..." or "Faster. Cheaper. Better."
+
+PROOF (35-45 seconds):
+  Ground the insight with ONE of: personal experience, a specific result with numbers, a named case study, or a verifiable data point.
+  Format: "I did X. Result was Y." or "Company X saw Y% improvement."
+  Never use vague proof like "studies show" or "experts agree."
+
+CTA (45-${constraints.max_duration} seconds):
+  Single clear action. Must include a REASON WHY ("Follow because I drop one of these every day" not just "Follow me").
+  Must feel like a natural next step, not a bolt-on ask.
+
+=============================================================
+ENGAGEMENT ENGINEERING (mandatory)
+=============================================================
+Every script MUST contain:
+1. At least ONE "comment trigger" — a controversial claim, a direct question, or a fill-in-the-blank prompt that compels viewers to comment.
+2. Exactly 2-3 "screenshot moments" — quotable standalone sentences marked with [SCREENSHOT MOMENT] in the body.
+3. The CTA must give a concrete REASON to follow/subscribe, not just ask for the action.
+
+=============================================================
+ANTI-AI-SLOP RULES (violating any of these is an automatic failure)
+=============================================================
+NEVER use:
+- "In today's video" or "Hey guys" or any greeting as an opening
+- "Without further ado" or "Let's dive in" or "Let's get started"
+- "In this rapidly evolving landscape" or "In today's digital age"
+- "Game-changer" or "revolutionary" without SPECIFIC proof
+- Generic statements that could apply to ANY topic ("AI is changing the world")
+- Listicle format without a strong narrative thread connecting the points
+- Corporate or formal tone ("It is imperative that" / "One must consider")
+- Emojis anywhere in the spoken script
+- Filler phrases ("So basically" / "You know" / "Actually" / "Literally")
+- Any sentence so generic it could apply to 100 different topics — every line MUST be ultra-specific to ${topic}
+
+=============================================================
+OUTPUT FORMAT
+=============================================================
 Return a JSON object with these exact fields:
 {
-  "hook": "The attention-grabbing opening line (first 3 seconds)",
-  "hook_variants": ["Alternative hook 1", "Alternative hook 2", "Alternative hook 3"],
-  "body": "The main content of the script — what to say/show, broken into clear beats",
-  "cta": "The call to action at the end",
+  "hook": "The pattern-interrupt opening line (first 3 seconds, max 2 sentences)",
+  "hook_variants": ["Variant using different psych trigger", "Another variant", "Third variant"],
+  "body": "Full script body from TENSION through PROOF. Include [SCREENSHOT MOMENT] markers on quotable lines. Write exactly as it should be spoken aloud — conversational, punchy, specific.",
+  "cta": "The call to action with a specific REASON to act",
   "cta_type": "one of: follow, comment, share, link_in_bio, dm_keyword, product_link, newsletter, free_resource, paid_product, affiliate, none",
-  "caption": "The caption to post with the video",
+  "caption": "Platform-optimized caption with keywords (no hashtags here)",
   "caption_variants": ["Alternative caption 1", "Alternative caption 2"],
   "hashtags": ["hashtag1", "hashtag2", "hashtag3", "hashtag4", "hashtag5"],
   "estimated_duration": 45,
-  "monetization_hook": "How this content drives revenue (or null if purely growth)",
-  "trending_sound_suggestion": "Suggested trending audio if applicable (or null)",
+  "monetization_hook": "Specific monetization angle for this script (or null if purely growth)",
+  "trending_sound_suggestion": "Specific trending audio name if applicable (or null)",
   "text_overlay_suggestions": [
-    {"text": "Key text on screen", "size": 48, "color": "#FFFFFF", "y": 0.3, "startTime": 0, "endTime": 3},
-    {"text": "Second overlay", "size": 36, "color": "#FFFF00", "y": 0.5, "startTime": 3, "endTime": 6}
+    {"text": "Key text on screen matching a screenshot moment", "size": 48, "color": "#FFFFFF", "y": 0.3, "startTime": 0, "endTime": 3},
+    {"text": "Second overlay for next beat", "size": 36, "color": "#FFFF00", "y": 0.5, "startTime": 3, "endTime": 6}
   ]
 }
 

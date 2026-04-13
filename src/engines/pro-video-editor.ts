@@ -50,7 +50,7 @@ interface TextStyleConfig {
 }
 
 interface ColorGradeConfig {
-  preset: 'cinematic' | 'warm' | 'cool' | 'high_contrast' | 'moody' | 'vibrant' | 'none';
+  preset: 'cinematic' | 'warm' | 'cool' | 'high_contrast' | 'moody' | 'vibrant' | 'tiktok_pop' | 'dark_moody' | 'clean_bright' | 'none';
   brightness: number;
   contrast: number;
   saturation: number;
@@ -144,6 +144,20 @@ export const EDIT_PROFILES: Record<string, EditProfile> = {
     zoom: { hook_zoom: false, emphasis_zoom: false, zoom_factor: 1.0, ken_burns: true },
     branding: { watermark_text: 'The Operator', watermark_position: 'bottom_right', watermark_opacity: 0.5, progress_bar: false, progress_bar_color: '#3b82f6', lower_third: true, lower_third_text: 'The Operator | AI Strategy' },
   },
+  tiktok_2025: {
+    name: 'TikTok 2025',
+    transitions: { intro: 'zoom_in', between_cuts: 'hard_cut', outro: 'none', duration_frames: 4 },
+    textStyle: {
+      font: 'Impact', primary_color: 'white', highlight_color: 'yellow',
+      outline_color: 'black', outline_width: 5, shadow: false,
+      position: 'center', animation: 'word_highlight',
+      size_hook: 80, size_body: 56, size_cta: 64,
+    },
+    colorGrade: { preset: 'tiktok_pop', brightness: 0.06, contrast: 1.2, saturation: 1.4, gamma: 1.05, vignette: false },
+    soundDesign: { transition_whoosh: true, impact_on_text: true, subtle_riser: false, music_duck_on_speech: true, bass_drop_on_hook: true },
+    zoom: { hook_zoom: true, emphasis_zoom: true, zoom_factor: 1.3, ken_burns: false },
+    branding: { watermark_text: '@theoperator', watermark_position: 'top_right', watermark_opacity: 0.5, progress_bar: true, progress_bar_color: '#ff0000', lower_third: false, lower_third_text: '' },
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -151,12 +165,15 @@ export const EDIT_PROFILES: Record<string, EditProfile> = {
 // ---------------------------------------------------------------------------
 
 const COLOR_GRADE_FILTERS: Record<string, string> = {
-  cinematic: 'eq=brightness=-0.02:contrast=1.2:saturation=0.9:gamma=0.9,curves=preset=cross_process',
-  warm: 'eq=brightness=0.01:contrast=1.1:saturation=1.05,colorbalance=rs=0.05:gs=0.02:bs=-0.03',
+  cinematic: 'eq=brightness=-0.03:contrast=1.25:saturation=0.85:gamma=0.88,colorbalance=rs=0.02:gs=-0.01:bs=0.04,curves=preset=cross_process,unsharp=3:3:0.3',
+  warm: 'eq=brightness=0.02:contrast=1.12:saturation=1.1,colorbalance=rs=0.06:gs=0.03:bs=-0.04:rh=0.02,curves=preset=lighter',
   cool: 'eq=brightness=0.0:contrast=1.15:saturation=0.95,colorbalance=rs=-0.04:gs=0.0:bs=0.06',
   high_contrast: 'eq=brightness=0.02:contrast=1.3:saturation=1.1:gamma=0.95,unsharp=5:5:0.5',
   moody: 'eq=brightness=-0.05:contrast=1.25:saturation=0.8:gamma=0.85,curves=preset=darker',
   vibrant: 'eq=brightness=0.05:contrast=1.15:saturation=1.3:gamma=1.0,unsharp=3:3:0.3',
+  tiktok_pop: 'eq=brightness=0.06:contrast=1.2:saturation=1.4:gamma=1.05,unsharp=5:5:0.5',
+  dark_moody: 'eq=brightness=-0.08:contrast=1.35:saturation=0.7:gamma=0.8,vignette=PI/3.5,curves=preset=darker',
+  clean_bright: 'eq=brightness=0.04:contrast=1.08:saturation=1.05,unsharp=3:3:0.2',
   none: '',
 };
 
@@ -192,7 +209,15 @@ export async function applyProEdit(
     filters.push('vignette=PI/4');
   }
 
-  // 3. DYNAMIC ZOOM ON HOOK (first 3 seconds)
+  // 3. JUMP CUT SIMULATION — alternates between normal and 1.05x zoom every 5s
+  // Standard technique for talking-head videos to maintain visual interest
+  if (editProfile.zoom.hook_zoom || editProfile.zoom.emphasis_zoom) {
+    filters.push(
+      "zoompan=z='if(mod(floor(on/150),2),1.05,1)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=1080x1920:fps=30"
+    );
+  }
+
+  // 4. DYNAMIC ZOOM ON HOOK (first 3 seconds)
   if (editProfile.zoom.hook_zoom) {
     const z = editProfile.zoom.zoom_factor;
     filters.push(`zoompan=z='if(lt(on,90),${z}-(${z}-1)*on/90,1)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=1080x1920:fps=30`);
@@ -201,7 +226,7 @@ export async function applyProEdit(
     filters.push("zoompan=z='1+0.001*on':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=1080x1920:fps=30");
   }
 
-  // 4. INTRO TRANSITION
+  // 5. INTRO TRANSITION
   if (editProfile.transitions.intro === 'fade') {
     filters.push('fade=t=in:st=0:d=0.5');
   } else if (editProfile.transitions.intro === 'zoom_in') {
@@ -209,12 +234,12 @@ export async function applyProEdit(
     filters.push('fade=t=in:st=0:d=0.3');
   }
 
-  // 5. OUTRO TRANSITION
+  // 6. OUTRO TRANSITION
   if (editProfile.transitions.outro === 'fade_out' && options?.duration) {
     filters.push(`fade=t=out:st=${Math.max(0, options.duration - 1)}:d=1`);
   }
 
-  // 6. TEXT OVERLAYS
+  // 7. TEXT OVERLAYS
   const textFilters: string[] = [];
 
   // Hook text (first 3 seconds, large and bold)
@@ -266,7 +291,7 @@ export async function applyProEdit(
 
   if (textFilters.length > 0) filters.push(...textFilters);
 
-  // 7. WATERMARK
+  // 8. WATERMARK
   const brand = editProfile.branding;
   if (brand.watermark_text) {
     const escaped = brand.watermark_text.replace(/'/g, "\u2019").replace(/:/g, '\\:');
@@ -278,7 +303,7 @@ export async function applyProEdit(
     );
   }
 
-  // 8. PROGRESS BAR (thin bar at bottom showing video progress)
+  // 9. PROGRESS BAR (thin bar at bottom showing video progress)
   if (brand.progress_bar && options?.duration) {
     const hexColor = brand.progress_bar_color.replace('#', '0x');
     filters.push(
@@ -286,7 +311,7 @@ export async function applyProEdit(
     );
   }
 
-  // 9. LOWER THIRD (name/title bar at bottom)
+  // 10. LOWER THIRD (name/title bar at bottom)
   if (brand.lower_third && brand.lower_third_text) {
     const escaped = brand.lower_third_text.replace(/'/g, "\u2019").replace(/:/g, '\\:');
     filters.push(
@@ -368,12 +393,14 @@ export async function burnAnimatedCaptions(
   inputPath: string,
   srtPath: string,
   outputPath: string,
-  style: 'bold_highlight' | 'minimal_white' | 'karaoke_yellow' = 'bold_highlight',
+  style: 'bold_highlight' | 'minimal_white' | 'karaoke_yellow' | 'hormozi_caps' | 'clean_modern' = 'bold_highlight',
 ): Promise<string> {
   const styles: Record<string, string> = {
     bold_highlight: "FontName=Arial,FontSize=28,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BorderStyle=3,Outline=4,Shadow=0,MarginV=80,Alignment=2,Bold=1",
     minimal_white: "FontName=Helvetica,FontSize=22,PrimaryColour=&H00FFFFFF,OutlineColour=&H80000000,BorderStyle=3,Outline=2,Shadow=0,MarginV=100,Alignment=2",
     karaoke_yellow: "FontName=Arial,FontSize=30,PrimaryColour=&H0000FFFF,OutlineColour=&H00000000,BorderStyle=3,Outline=4,Shadow=2,MarginV=70,Alignment=2,Bold=1",
+    hormozi_caps: "FontName=Impact,FontSize=32,PrimaryColour=&H0000FFFF,SecondaryColour=&H00FFFFFF,OutlineColour=&H00000000,BackColour=&H80000000,BorderStyle=4,Outline=0,Shadow=0,MarginV=60,Alignment=2,Bold=1",
+    clean_modern: "FontName=Arial,FontSize=24,PrimaryColour=&H00FFFFFF,OutlineColour=&H40000000,BorderStyle=1,Outline=2,Shadow=1,MarginV=90,Alignment=2",
   };
 
   // Check SRT file exists
@@ -389,6 +416,36 @@ export async function burnAnimatedCaptions(
   } catch (err) {
     log(`Caption burn failed: ${err instanceof Error ? err.message : String(err)}`);
     return inputPath;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// AUDIO ENHANCEMENT — normalize, denoise, compress for consistent pro sound
+// ---------------------------------------------------------------------------
+
+export async function enhanceAudio(inputPath: string, outputPath: string): Promise<string> {
+  log(`Enhancing audio: ${inputPath}`);
+
+  await mkdir(join(outputPath, '..'), { recursive: true });
+
+  // Chain: normalize levels → remove background noise → compress for consistency
+  const audioFilters = [
+    'loudnorm=I=-16:LRA=11:TP=-1.5',
+    'highpass=f=80,lowpass=f=12000',
+    'acompressor=threshold=-20dB:ratio=4:attack=5:release=50',
+  ].join(',');
+
+  const cmd = `ffmpeg -y -i "${inputPath}" -af "${audioFilters}" -c:v copy "${outputPath}" 2>/dev/null`;
+
+  try {
+    await execAsync(cmd, { timeout: 120000 });
+    log(`Audio enhanced: ${outputPath}`);
+    return outputPath;
+  } catch (err) {
+    log(`Audio enhancement failed: ${err instanceof Error ? err.message : String(err)}`);
+    // Fallback: copy input to output
+    await execAsync(`cp "${inputPath}" "${outputPath}"`);
+    return outputPath;
   }
 }
 
@@ -416,16 +473,20 @@ export async function fullProPipeline(
   const baseDir = join(process.cwd(), 'content', 'processed', dateStr, scriptData.id);
   await mkdir(baseDir, { recursive: true });
 
-  // Step 1: Burn captions if SRT provided
+  // Step 1: Enhance audio — normalize, denoise, compress (audio quality is half the battle)
+  const audioEnhancedPath = join(baseDir, 'audio_enhanced.mp4');
+  await enhanceAudio(rawVideoPath, audioEnhancedPath);
+
+  // Step 2: Burn captions if SRT provided
   let captionedPath: string | null = null;
   if (srtPath) {
     captionedPath = join(baseDir, 'captioned.mp4');
-    await burnAnimatedCaptions(rawVideoPath, srtPath, captionedPath);
+    await burnAnimatedCaptions(audioEnhancedPath, srtPath, captionedPath);
   }
 
-  const editSource = captionedPath || rawVideoPath;
+  const editSource = captionedPath || audioEnhancedPath;
 
-  // Step 2: Apply pro edit for all platforms
+  // Step 3: Apply pro edit for all platforms
   const outputs = await proEditForAllPlatforms(editSource, {
     hookText: scriptData.hook,
     keyPoints: scriptData.keyPoints || [scriptData.body.slice(0, 80)],
@@ -433,7 +494,7 @@ export async function fullProPipeline(
     scriptId: scriptData.id,
   });
 
-  // Step 3: Generate thumbnails
+  // Step 4: Generate thumbnails
   const thumbnails: string[] = [];
   try {
     const thumbDir = join(baseDir, 'thumbnails');
