@@ -13,10 +13,7 @@ import { getOllama } from '@/lib/ollama';
 
 const generateSchema = z.object({
   topic: z.string().min(3).max(500),
-  pillar: z.enum([
-    'ai_news', 'ai_tutorials', 'ai_tools', 'ai_opinions',
-    'ai_money', 'ai_career', 'ai_drama',
-  ]),
+  pillar: z.string().min(1).optional().default('breaking_news'),
   platform: z.enum(['tiktok', 'reels', 'youtube_shorts', 'linkedin', 'twitter']).optional(),
   radar_item_id: z.string().uuid().optional(),
   gap_id: z.string().uuid().optional(),
